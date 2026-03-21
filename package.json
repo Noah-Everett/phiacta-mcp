@@ -1,0 +1,26 @@
+{
+  "name": "@phiacta/mcp",
+  "version": "0.1.0",
+  "description": "MCP server for interacting with the Phiacta knowledge platform",
+  "license": "GPL-3.0-or-later",
+  "type": "module",
+  "bin": {
+    "phiacta-mcp": "dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/index.ts",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0",
+    "@types/node": "^22.0.0"
+  }
+}
