@@ -20,7 +20,7 @@ import { PhiactaClient } from "./client.js";
 // Configuration
 // ---------------------------------------------------------------------------
 
-const API_URL = process.env.PHIACTA_API_URL ?? "http://localhost:8000";
+const API_URL = process.env.PHIACTA_API_URL ?? "https://api.phiacta.com";
 const AGENT_EMAIL = process.env.PHIACTA_EMAIL ?? "";
 const AGENT_PASSWORD = process.env.PHIACTA_PASSWORD ?? "";
 

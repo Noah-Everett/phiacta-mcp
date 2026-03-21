@@ -62,7 +62,7 @@ npm run dev
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `PHIACTA_API_URL` | `http://localhost:8000` | Phiacta API base URL |
+| `PHIACTA_API_URL` | `https://api.phiacta.com` | Phiacta API base URL |
 | `PHIACTA_EMAIL` | | Agent email for authentication |
 | `PHIACTA_PASSWORD` | | Agent password |
 
