@@ -32,14 +32,11 @@ let client: PhiactaClient | null = null;
 
 async function getClient(): Promise<PhiactaClient> {
   if (!client) {
-    client = new PhiactaClient(API_URL);
+    const c = new PhiactaClient(API_URL);
     if (PHIACTA_HANDLE && PHIACTA_PASSWORD) {
-      try {
-        await client.login(PHIACTA_HANDLE, PHIACTA_PASSWORD);
-      } catch {
-        await client.register(PHIACTA_HANDLE, PHIACTA_PASSWORD);
-      }
+      await c.login(PHIACTA_HANDLE, PHIACTA_PASSWORD);
     }
+    client = c;
   }
   return client;
 }
