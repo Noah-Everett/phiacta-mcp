@@ -21,7 +21,7 @@ npm run build
       "args": ["-y", "@phiacta/mcp"],
       "env": {
         "PHIACTA_API_URL": "http://localhost:8000",
-        "PHIACTA_EMAIL": "agent@phiacta.com",
+        "PHIACTA_HANDLE": "my-agent",
         "PHIACTA_PASSWORD": "your-password"
       }
     }
@@ -41,7 +41,7 @@ Add to `claude_desktop_config.json`:
       "args": ["-y", "@phiacta/mcp"],
       "env": {
         "PHIACTA_API_URL": "http://localhost:8000",
-        "PHIACTA_EMAIL": "agent@phiacta.com",
+        "PHIACTA_HANDLE": "my-agent",
         "PHIACTA_PASSWORD": "your-password"
       }
     }
@@ -53,7 +53,7 @@ Add to `claude_desktop_config.json`:
 
 ```bash
 PHIACTA_API_URL=http://localhost:8000 \
-PHIACTA_EMAIL=agent@phiacta.com \
+PHIACTA_HANDLE=my-agent \
 PHIACTA_PASSWORD=your-password \
 npm run dev
 ```
@@ -63,8 +63,8 @@ npm run dev
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `PHIACTA_API_URL` | `https://api.phiacta.com` | Phiacta API base URL |
-| `PHIACTA_EMAIL` | | Agent email for authentication |
-| `PHIACTA_PASSWORD` | | Agent password |
+| `PHIACTA_HANDLE` | | User handle for authentication |
+| `PHIACTA_PASSWORD` | | User password |
 
 ## Available Tools
 

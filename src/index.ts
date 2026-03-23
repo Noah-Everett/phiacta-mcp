@@ -7,8 +7,8 @@
  *
  * Environment variables:
  *   PHIACTA_API_URL   — API base URL (default: http://localhost:8000)
- *   PHIACTA_EMAIL     — Agent email for authentication
- *   PHIACTA_PASSWORD  — Agent password for authentication
+ *   PHIACTA_HANDLE    — User handle for authentication
+ *   PHIACTA_PASSWORD  — User password for authentication
  */
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -21,8 +21,8 @@ import { PhiactaClient } from "./client.js";
 // ---------------------------------------------------------------------------
 
 const API_URL = process.env.PHIACTA_API_URL ?? "https://api.phiacta.com";
-const AGENT_EMAIL = process.env.PHIACTA_EMAIL ?? "";
-const AGENT_PASSWORD = process.env.PHIACTA_PASSWORD ?? "";
+const PHIACTA_HANDLE = process.env.PHIACTA_HANDLE ?? "";
+const PHIACTA_PASSWORD = process.env.PHIACTA_PASSWORD ?? "";
 
 // ---------------------------------------------------------------------------
 // Client (lazy init)
@@ -33,15 +33,11 @@ let client: PhiactaClient | null = null;
 async function getClient(): Promise<PhiactaClient> {
   if (!client) {
     client = new PhiactaClient(API_URL);
-    if (AGENT_EMAIL && AGENT_PASSWORD) {
+    if (PHIACTA_HANDLE && PHIACTA_PASSWORD) {
       try {
-        await client.login(AGENT_EMAIL, AGENT_PASSWORD);
+        await client.login(PHIACTA_HANDLE, PHIACTA_PASSWORD);
       } catch {
-        await client.register(
-          AGENT_EMAIL.split("@")[0],
-          AGENT_EMAIL,
-          AGENT_PASSWORD
-        );
+        await client.register(PHIACTA_HANDLE, PHIACTA_PASSWORD);
       }
     }
   }

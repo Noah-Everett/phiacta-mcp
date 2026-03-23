@@ -64,25 +64,21 @@ export class PhiactaClient {
 
   // ---- Auth ----
 
-  async login(email: string, password: string): Promise<unknown> {
+  async login(handle: string, password: string): Promise<unknown> {
     const result = await this.request({
       method: "POST",
       path: `${API_PREFIX}/auth/login`,
-      body: { email, password },
+      body: { handle, password },
     });
     this.token = (result as { access_token: string }).access_token;
     return result;
   }
 
-  async register(
-    handle: string,
-    email: string,
-    password: string
-  ): Promise<unknown> {
+  async register(handle: string, password: string): Promise<unknown> {
     const result = await this.request({
       method: "POST",
       path: `${API_PREFIX}/auth/register`,
-      body: { handle, email, password },
+      body: { handle, password },
     });
     this.token = (result as { access_token: string }).access_token;
     return result;
