@@ -11,7 +11,8 @@ import type { DiscoveredTool } from "./discovery.js";
 import type { PhiactaClient } from "./client.js";
 
 export interface ToolResult {
-  content: Array<{ type: string; text: string }>;
+  [key: string]: unknown;
+  content: Array<{ type: "text"; text: string }>;
   isError?: boolean;
 }
 
