@@ -15,7 +15,7 @@ export const REPRESENTATIVE_OPENAPI_SPEC = {
           { name: "limit", in: "query", required: false, schema: { type: "integer", default: 50 } },
           { name: "offset", in: "query", required: false, schema: { type: "integer", default: 0 } },
           { name: "status", in: "query", required: false, schema: { type: "string", default: "active" } },
-          { name: "layout_hint", in: "query", required: false, schema: { anyOf: [{ type: "string" }, { type: "null" }] } },
+          { name: "entry_type", in: "query", required: false, schema: { anyOf: [{ type: "string" }, { type: "null" }] } },
         ],
         responses: { "200": { description: "Successful Response" } },
       },
@@ -34,7 +34,7 @@ export const REPRESENTATIVE_OPENAPI_SPEC = {
                 properties: {
                   title: { type: "string" },
                   summary: { anyOf: [{ type: "string" }, { type: "null" }] },
-                  layout_hint: { type: "string", default: "assertion" },
+                  entry_type: { type: "string", default: "assertion" },
                 },
               },
             },
@@ -239,7 +239,7 @@ export const SPEC_WITH_REFS = {
         properties: {
           title: { type: "string" },
           summary: { anyOf: [{ type: "string" }, { type: "null" }] },
-          layout_hint: { type: "string", default: "assertion" },
+          entry_type: { type: "string", default: "assertion" },
         },
       },
       SetTagsRequest: {

@@ -158,7 +158,7 @@ describe("discoverTools", () => {
       expect(findTool(discoverTools(REPRESENTATIVE_OPENAPI_SPEC), "set_tags").zodSchema.safeParse({ entry_id: "550e8400-e29b-41d4-a716-446655440000", tags: ["a"] }).success).toBe(true);
     });
     it("accepts body parameters for POST", () => {
-      expect(findTool(discoverTools(REPRESENTATIVE_OPENAPI_SPEC), "create_entry").zodSchema.safeParse({ title: "Test", summary: "A test", layout_hint: "assertion" }).success).toBe(true);
+      expect(findTool(discoverTools(REPRESENTATIVE_OPENAPI_SPEC), "create_entry").zodSchema.safeParse({ title: "Test", summary: "A test", entry_type: "assertion" }).success).toBe(true);
     });
     it("requires mandatory fields", () => {
       expect(findTool(discoverTools(REPRESENTATIVE_OPENAPI_SPEC), "create_entry").zodSchema.safeParse({ summary: "Missing title" }).success).toBe(false);

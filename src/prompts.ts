@@ -7,6 +7,11 @@
  * Prompts are reusable workflow templates that connected clients discover
  * through the standard MCP protocol (e.g., they show up as slash commands
  * in Claude Code).
+ *
+ * IMPORTANT: Do not hardcode specific tool names, field names, file paths,
+ * or extension/plugin names. The tools are auto-discovered from the backend
+ * OpenAPI spec and their schemas describe their own parameters. Prompts
+ * should describe domain concepts and workflows, not implementation details.
  */
 
 import { z } from "zod";
@@ -15,7 +20,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 const PAPER_INGESTION_PROMPT = `You are extracting structured knowledge from an academic paper into **entries** \
 for the Phiacta knowledge platform. Your goal is to produce a complete, exhaustive \
 list of every atomic piece of knowledge in the paper, then create each one as an \
-entry using the Phiacta MCP tools.
+entry using the available Phiacta tools.
 
 ## Step 1: Read the paper
 
@@ -31,13 +36,13 @@ Read the full paper before proceeding.
 
 ## Step 2: Search for existing entries
 
-Before extracting, use \`search_entries\` to check whether this paper (or parts \
-of it) has already been ingested. If existing entries cover the same knowledge, \
-reference them rather than creating duplicates.
+Before extracting, search for whether this paper (or parts of it) has already \
+been ingested. If existing entries cover the same knowledge, reference them \
+rather than creating duplicates.
 
 Also search for entries that your new entries will want to reference — established \
 definitions, theorems, or results from other papers that are already in Phiacta. \
-Note their IDs for use in refs later.
+Note their IDs for use in references later.
 
 ## Step 3: Plan the extraction
 
@@ -48,38 +53,7 @@ Extract **every** atomic piece of knowledge from the paper. Be exhaustive.
 An entry is a single, versioned, citable unit of knowledge. Each entry is \
 **atomic** — it represents exactly one thing. Do not combine multiple ideas \
 into one entry. Larger structures like papers are represented by an \
-**argument entry** that references the atomic entries.
-
-### Entry types
-
-Each entry has a \`layout_hint\` — an open-ended string indicating what kind of \
-knowledge it represents. Use values like:
-
-- \`claim\` — an assertable statement, empirical finding, methodological claim
-- \`theorem\` / \`lemma\` / \`corollary\` / \`proposition\` — formal mathematical statements
-- \`definition\` — a defined term, quantity, or concept
-- \`conjecture\` — an unproven claim
-- \`method\` — a procedure or algorithm
-- \`result\` — an empirical or computational finding
-- \`observation\` — a remark or insight
-- \`assumption\` — a stated condition or constraint
-- \`notation\` — a notation convention
-- \`argument\` — a structured composition of other entries (use for the paper entry)
-
-You can use any value that fits — these are not a fixed list.
-
-### Reference roles
-
-Entries reference each other with typed links:
-
-| Role | Meaning |
-|---|---|
-| \`derives_from\` | Builds on / assumes another entry |
-| \`evidence\` | Provides evidence or proof for another entry |
-| \`rebuttal\` | Argues against another entry |
-| \`supersedes\` | Replaces another entry |
-| \`citation\` | References another entry without a stronger relationship |
-| \`context\` | Provides background context for another entry |
+argument entry that references the atomic entries.
 
 ### What to extract
 
@@ -100,19 +74,19 @@ Entries reference each other with typed links:
 2. Be **precise**. Use the paper's exact mathematical notation and statements. \
    Do not paraphrase theorems or weaken claims.
 3. Map **all references** between entries. If theorem 3 uses lemma 1 and \
-   definition 2, those refs must be present. This is the most important part \
-   of the extraction.
+   definition 2, those references must be present. This is the most important \
+   part of the extraction.
 4. The **argument entry** should be created last. It represents the paper \
    itself and references every other entry, organizing them into the paper's \
    logical structure.
 5. Include **negative results and limitations** as their own entries.
 6. For **external references** (prior papers, established theorems) that are \
    NOT already in Phiacta, note them in the entry's content but do not create \
-   refs to nonexistent entries. If they ARE in Phiacta (found in Step 2), \
-   include refs to them.
-7. Preserve the paper's **logical dependency structure** in refs.
+   references to nonexistent entries. If they ARE in Phiacta (found in Step 2), \
+   include references to them.
+7. Preserve the paper's **logical dependency structure** in references.
 
-Before calling any tools, plan your full extraction as a numbered list of entries \
+Before using any tools, plan your full extraction as a numbered list of entries \
 with their types, titles, and references to other entries in your list. This lets \
 you map out the dependency structure before creating anything.
 
@@ -122,38 +96,23 @@ A large paper may produce dozens of entries. To keep things manageable, split th
 work into batches — process entries in parallel where possible rather than creating \
 them one at a time sequentially.
 
-For each entry, use the Phiacta MCP tools:
+For each entry, use the available Phiacta tools to:
 
-1. **\`create_entry\`** — Create the entry with:
-   - \`title\`: concise title
-   - \`summary\`: one-sentence summary
-   - \`layout_hint\`: the entry type from above
+1. **Create the entry** — with a concise title, one-sentence summary, and \
+   appropriate type. Check the tool schemas for the available parameters.
 
-2. **\`put_entry_file\`** — Upload the entry's content as a README file:
-   - \`path\`: \`README.md\`
-   - \`content\`: the full entry body — mathematical content, equations, \
-     explanations. Someone reading only this entry should understand it \
-     without reading the paper.
+2. **Upload content** — write the full entry body (mathematical content, \
+   equations, explanations). Someone reading only this entry should understand \
+   it without reading the paper.
 
-3. **\`set_tags\`** — Tag the entry for discoverability
+3. **Tag the entry** — add tags for discoverability.
 
-4. **\`put_entry_file\`** — Create references by writing a \`.phiacta/refs.yaml\` file:
-   - \`path\`: \`.phiacta/refs.yaml\`
-   - \`content\`: a YAML list of refs, each with \`to\` (target entry ID) and \
-     \`rel\` (role from the table above). Both the source and target entries \
-     must exist before creating the ref.
-
-   Example \`.phiacta/refs.yaml\`:
-   \`\`\`yaml
-   - to: "target-entry-uuid"
-     rel: "derives_from"
-   - to: "another-entry-uuid"
-     rel: "evidence"
-   \`\`\`
+4. **Create references** — create typed links to other entries. Both the \
+   source and target entries must exist before creating a reference.
 
 Create entries in dependency order (definitions first, then theorems that use \
-them, then results, then the argument entry last) so that ref targets exist \
-before they are referenced.
+them, then results, then the argument entry last) so that reference targets \
+exist before they are referenced.
 
 ## Step 5: Summary
 
