@@ -6,6 +6,14 @@
  * Handles authentication, request/response plumbing, and 401 retry.
  */
 
+export interface PluginInfo {
+  name: string;
+  type: string;
+  version: string;
+  description: string;
+  depends_on: string[];
+}
+
 export class PhiactaClient {
   private baseUrl: string;
   private token: string | null = null;
@@ -58,6 +66,15 @@ export class PhiactaClient {
     }
 
     return resp.json();
+  }
+
+  async fetchPlugins(): Promise<PluginInfo[]> {
+    const url = `${this.baseUrl}/v1/plugins`;
+    const resp = await fetch(url, { method: "GET" });
+    if (!resp.ok) {
+      return []; // graceful fallback if endpoint unavailable
+    }
+    return resp.json() as Promise<PluginInfo[]>;
   }
 
   async callApi(

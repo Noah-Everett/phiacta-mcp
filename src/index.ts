@@ -24,31 +24,48 @@ const API_URL = process.env.PHIACTA_API_URL ?? "https://api.phiacta.com";
 const PHIACTA_HANDLE = process.env.PHIACTA_HANDLE ?? "";
 const PHIACTA_PASSWORD = process.env.PHIACTA_PASSWORD ?? "";
 
-async function main() {
-  const server = new McpServer(
-    {
-      name: "phiacta",
-      version: "0.1.0",
-    },
-    {
-      instructions: [
-        "Phiacta is a knowledge platform where information is stored as **entries**.",
-        "",
-        "An entry is a single, versioned, citable unit of knowledge. Entries are **atomic** — each one represents exactly one thing (a definition, a theorem, a claim, a result, etc.). Do not combine multiple ideas into one entry.",
-        "",
-        "Larger structures (like papers, arguments, or reviews) are represented by an entry that references its component entries.",
-        "",
-        "Use the available tools to create, search, and manage entries. Each tool's schema describes its parameters.",
-      ].join("\n"),
-    }
-  );
+function buildInstructions(plugins: import("./client.js").PluginInfo[]): string {
+  const lines = [
+    "Phiacta is a knowledge platform where information is stored as **entries**.",
+    "",
+    "An entry is a single, versioned, citable unit of knowledge. Entries are **atomic** — each one represents exactly one thing (a definition, a theorem, a claim, a result, etc.). Do not combine multiple ideas into one entry.",
+    "",
+    "Larger structures (like papers, arguments, or reviews) are represented by an entry that references its component entries.",
+    "",
+    "Use the available tools to create, search, and manage entries. Each tool's schema describes its parameters.",
+  ];
 
+  if (plugins.length > 0) {
+    lines.push("", "**Loaded plugins:**");
+    for (const p of plugins) {
+      const desc = p.description ? ` — ${p.description}` : "";
+      lines.push(`- ${p.name} (${p.type})${desc}`);
+    }
+  }
+
+  return lines.join("\n");
+}
+
+async function main() {
   const client = new PhiactaClient(API_URL);
 
   // Login if credentials are provided
   if (PHIACTA_HANDLE && PHIACTA_PASSWORD) {
     await client.login(PHIACTA_HANDLE, PHIACTA_PASSWORD);
   }
+
+  // Fetch plugins for dynamic instructions
+  const plugins = await client.fetchPlugins();
+
+  const server = new McpServer(
+    {
+      name: "phiacta",
+      version: "0.1.0",
+    },
+    {
+      instructions: buildInstructions(plugins),
+    }
+  );
 
   // Fetch OpenAPI spec and discover tools
   const spec = await client.fetchOpenApiSpec();
