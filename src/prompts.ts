@@ -17,180 +17,194 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
-const PAPER_INGESTION_PROMPT = `You are extracting structured knowledge from an academic paper into **entries** \
-for the Phiacta knowledge platform. Your goal is to produce a complete, exhaustive \
-list of every atomic piece of knowledge in the paper, then create each one as an \
-entry using the available Phiacta tools.
+const PAPER_INGESTION_PROMPT = `You are extracting structured knowledge from an academic paper \
+into the Phiacta knowledge platform.
 
-## Step 1: Read the paper
+## Input
 
-The user has provided a paper as: {{paper}}
+The user has provided: {{paper}}
 
-Determine what this is and read it:
-- If it's a file path, read the file
-- If it's a directory, find and read paper files within it
-- If it's a URL, fetch the content
-- If it's raw text, use it directly
+Read this first. If it's a file path or directory, read the files. If it's raw text, use it \
+directly. Read the **full paper** before doing anything else.
 
-Read the full paper before proceeding.
+## Goal
 
-## Step 2: Search for existing entries
+Every atomic piece of knowledge in the paper becomes its own entry. An entry represents \
+exactly ONE thing — a definition, a theorem, a result, an observation. Never combine \
+multiple ideas into one entry.
 
-Before extracting, search for whether this paper (or parts of it) has already \
-been ingested. If existing entries cover the same knowledge, reference them \
-rather than creating duplicates.
+The paper itself becomes an **argument** entry that references all the atomic entries, \
+organizing them into the paper's logical structure. Create this last.
 
-Also search for entries that your new entries will want to reference — established \
-definitions, theorems, or results from other papers that are already in Phiacta. \
-Note their IDs for use in references later.
+## Before creating anything
 
-## Step 3: Plan the extraction
+1. **Search first.** Search Phiacta for this paper's title, key terms, and author names. \
+If entries already exist for this paper, reference them instead of duplicating.
 
-Extract **every** atomic piece of knowledge from the paper. Be exhaustive.
+2. **Search for reference targets.** The entries you create will cite prior work. Search \
+for definitions, theorems, or results from other papers that are already in Phiacta. \
+Note their IDs — you'll create references to them later.
 
-### What is an entry?
+3. **Plan the full extraction.** Write out a numbered list of every entry you intend to \
+create, with:
+   - Proposed title (concise, precise)
+   - Entry type (definition, theorem, lemma, proposition, corollary, conjecture, \
+     empirical, methodology, observation, assumption, assertion, proof, argument, \
+     refutation, hypothesis)
+   - Which other entries in your list it references (by number)
+   - Which existing Phiacta entries it references (by ID)
 
-An entry is a single, versioned, citable unit of knowledge. Each entry is \
-**atomic** — it represents exactly one thing. Do not combine multiple ideas \
-into one entry. Larger structures like papers are represented by an \
-argument entry that references the atomic entries.
+This plan is critical. It maps the paper's dependency structure before you touch the API. \
+Get it right before proceeding.
 
-### What to extract
+## Creating entries
 
-1. **Definitions** — every defined term, quantity, or concept
-2. **Theorems, lemmas, propositions, corollaries** — every formal statement
-3. **Conjectures** — any unproven claims
-4. **Methodological claims** — "our method does X," "algorithm Y achieves Z"
-5. **Empirical results** — specific numerical results, benchmarks, comparisons
-6. **Negative results** — things that didn't work, limitations discovered
-7. **Key observations** — important remarks or insights
-8. **Assumptions** — stated conditions or constraints
-9. **Notation conventions** — if they define notation used throughout
+Work through your plan in dependency order — definitions first, then theorems that use \
+them, then results, then the argument entry last. For each:
 
-### Extraction rules
+1. **Create the entry** with title, type, summary (one sentence), and content. \
+Choose the right content_format: use latex for papers with heavy math notation, \
+markdown for everything else, plain only if neither applies.
 
-1. Be **exhaustive**. Extract every definition, every theorem, every result. \
-   When in doubt, make it an entry. Too many is better than too few.
-2. Be **precise**. Use the paper's exact mathematical notation and statements. \
-   Do not paraphrase theorems or weaken claims.
-3. Map **all references** between entries. If theorem 3 uses lemma 1 and \
-   definition 2, those references must be present. This is the most important \
-   part of the extraction.
-4. The **argument entry** should be created last. It represents the paper \
-   itself and references every other entry, organizing them into the paper's \
-   logical structure.
-5. Include **negative results and limitations** as their own entries.
-6. For **external references** (prior papers, established theorems) that are \
-   NOT already in Phiacta, note them in the entry's content but do not create \
-   references to nonexistent entries. If they ARE in Phiacta (found in Step 2), \
-   include references to them.
-7. Preserve the paper's **logical dependency structure** in references.
+2. **Write self-contained content.** Someone reading only this entry — without the paper — \
+must understand it fully. Include all necessary context, conditions, and notation. \
+Use the paper's exact mathematical statements; do not paraphrase or weaken claims.
 
-Before using any tools, plan your full extraction as a numbered list of entries \
-with their types, titles, and references to other entries in your list. This lets \
-you map out the dependency structure before creating anything.
+3. **Tag for discoverability.** Add tags for the field, subfield, key concepts, and \
+techniques. Include the paper's arXiv ID if applicable (e.g., arxiv:2401.12345).
 
-## Step 4: Create entries
+4. **Create references** to other entries. Use appropriate relation types: \
+"cites", "derives_from", "supports", "evidence", "context". \
+Both entries must exist before you create a reference between them.
 
-A large paper may produce dozens of entries. To keep things manageable, split the \
-work into batches — process entries in parallel where possible rather than creating \
-them one at a time sequentially.
+## What to extract
 
-For each entry, use the available Phiacta tools to:
+Be exhaustive. When in doubt, make it an entry.
 
-1. **Create the entry** — with a concise title, one-sentence summary, and \
-   appropriate type. Check the tool schemas for the available parameters.
+- Every **definition** — defined terms, quantities, concepts
+- Every **theorem, lemma, proposition, corollary** — exact statements
+- Every **conjecture** — unproven claims
+- Every **methodological claim** — "our method achieves X"
+- Every **empirical result** — specific numbers, benchmarks, comparisons
+- Every **negative result** — what didn't work, limitations
+- Every **key observation** — important insights or remarks
+- Every **assumption** — stated conditions or constraints
+- **Notation conventions** if they define notation used throughout
 
-2. **Upload content** — write the full entry body (mathematical content, \
-   equations, explanations). Someone reading only this entry should understand \
-   it without reading the paper.
+## After creating everything
 
-3. **Tag the entry** — add tags for discoverability.
-
-4. **Create references** — create typed links to other entries. Both the \
-   source and target entries must exist before creating a reference.
-
-Create entries in dependency order (definitions first, then theorems that use \
-them, then results, then the argument entry last) so that reference targets \
-exist before they are referenced.
-
-## Step 5: Summary
-
-After creating all entries, report:
-- How many entries were created (by type)
+Report:
+- Total entries created, broken down by type
 - The argument entry's ID (the paper entry)
-- Any existing Phiacta entries that were linked to
-- Any external references that could not be linked (candidates for future ingestion)
-- Any pieces of the paper that were difficult to represent
-- Any observations about how well the entry format handled this paper`;
+- Existing Phiacta entries that were linked to
+- External references that couldn't be linked (candidates for future ingestion)
+- Anything in the paper that was difficult to represent as entries`;
 
-const ENTRY_REVIEW_PROMPT = `You are reviewing an existing entry in the Phiacta knowledge platform \
-for accuracy, completeness, and quality.
+const ENTRY_REVIEW_PROMPT = `You are reviewing an entry in the Phiacta knowledge platform. \
+Your job is to assess its accuracy, completeness, and quality, then suggest or make \
+improvements.
 
 ## Entry to review
 
-Look up this entry: {{entry_id}}
+{{entry_id}}
 
-## Review process
+## Process
 
-1. **Read the entry** — get the entry detail and its content file (.phiacta/content.md or similar)
+**Step 1: Read everything.** Get the entry's full detail (title, summary, type, tags, \
+references) AND its content. Read both carefully before evaluating.
 
-2. **Check accuracy** — Is the content factually correct? Are mathematical statements precise? \
-Are there logical errors or unstated assumptions?
+**Step 2: Assess accuracy.**
+- Is the content factually correct?
+- Are mathematical statements precise and properly conditioned?
+- Are there logical errors, gaps in reasoning, or unstated assumptions?
+- Does the title accurately describe what the entry contains?
+- Does the summary faithfully capture the key claim?
+- Is the entry type appropriate for what this entry actually is?
 
-3. **Check completeness** — Does the entry fully capture the knowledge it claims to represent? \
-Are there missing conditions, edge cases, or caveats?
+**Step 3: Assess completeness.**
+- Does the content fully capture the knowledge it claims to represent?
+- Could someone understand this entry without reading the original source?
+- Are there missing conditions, edge cases, or important caveats?
+- Are there important related concepts that should be mentioned?
 
-4. **Check references** — Are the references appropriate? Are there missing references to \
-entries that this entry depends on or relates to? Search for potentially related entries.
+**Step 4: Assess references.**
+- Search Phiacta for entries that this entry should reference but doesn't.
+- Are existing references appropriate? Is the relation type correct?
+- Does this entry depend on definitions or results that should be linked?
 
-5. **Check metadata** — Is the title precise? Is the summary accurate? Is the entry_type correct? \
-Are the tags comprehensive?
+**Step 5: Assess discoverability.**
+- Are the tags comprehensive? Would someone searching for this topic find it?
+- Is the title specific enough to distinguish it from similar entries?
 
-6. **Report** — Summarize your findings:
-   - What is correct and well-done
-   - What needs correction (with specific suggested fixes)
-   - Missing references that should be added
-   - Suggested tag/metadata improvements
-   - Overall quality assessment
+**Step 6: Act on findings.**
+- Metadata issues (title, summary, type, tags): offer to fix them immediately \
+using the update tool.
+- Missing references: offer to create them.
+- Content issues: describe the problem precisely with a suggested fix. \
+If the entry has an issue tracker, create an issue.
+- If everything looks good, say so — not every entry needs changes.
 
-If you find issues that can be fixed immediately (tags, metadata), offer to fix them. \
-For content issues, describe the problem precisely so the entry owner can address it \
-(or create an issue on the entry's repository).`;
+**Step 7: Report.**
+Summarize with:
+- **Verdict**: Good / Needs minor fixes / Needs significant revision
+- **What's correct**: What the entry does well
+- **Issues found**: Specific problems with suggested fixes
+- **Actions taken**: What you fixed (if anything)
+- **Actions recommended**: What the entry owner should fix`;
 
-const KNOWLEDGE_GAP_PROMPT = `You are analyzing the Phiacta knowledge platform to identify gaps \
-in coverage for a given topic.
+const KNOWLEDGE_GAP_PROMPT = `You are analyzing the Phiacta knowledge platform to map \
+coverage of a topic and identify what's missing.
 
-## Topic to analyze
+## Topic
 
 {{topic}}
 
 ## Process
 
-1. **Search broadly** — Search for entries related to the topic using multiple query variations. \
-Cast a wide net.
+**Step 1: Search broadly.** Don't just search once — try multiple queries:
+- The topic name directly
+- Key subtopics and subfields
+- Important theorems, results, or concepts within the topic
+- Prominent researchers or papers in the field
+- Related and adjacent topics
 
-2. **Map what exists** — List all found entries organized by subtopic. Note their types \
-(definition, theorem, result, etc.) and how they connect via references.
+Collect every relevant entry you find.
 
-3. **Identify gaps** — What's missing? Look for:
-   - Definitions that are used but not defined as entries
-   - Theorems stated without proofs
-   - Results without supporting evidence entries
-   - Missing connections between related entries
-   - Foundational concepts that lack entries
-   - Important subtopics with no coverage
+**Step 2: Map what exists.** Organize found entries into a structured overview:
+- Group by subtopic
+- Note entry types (definitions, theorems, results, etc.)
+- Note how entries connect via references
+- Identify the most and least covered subtopics
 
-4. **Prioritize** — Rank the gaps by importance:
-   - **Critical**: Missing definitions or theorems that other entries reference
-   - **Important**: Key results or concepts in the topic with no entries
-   - **Nice to have**: Supporting details, examples, or minor results
+**Step 3: Identify gaps.** For each subtopic, ask:
+- Are the foundational **definitions** present? A theorem about X is useless \
+if X isn't defined as an entry.
+- Are key **theorems and results** represented? Check the major results \
+that any introduction to this topic would cover.
+- Are there **broken dependency chains**? An entry that references a concept \
+but that concept has no entry is a gap.
+- Are there **isolated entries** with no references? They might be missing \
+connections to the broader knowledge graph.
+- What would a textbook chapter on this topic cover that Phiacta doesn't?
 
-5. **Report** — Present:
-   - Coverage map (what exists)
-   - Gap list with priorities
-   - Suggested entries to create (with proposed titles, types, and content outlines)
-   - Suggested references between existing and proposed entries`;
+**Step 4: Prioritize.**
+- **Critical gaps**: Missing definitions or theorems that existing entries depend on. \
+These break the knowledge graph's coherence.
+- **Important gaps**: Key results or concepts that any coverage of this topic should include. \
+Their absence makes the coverage incomplete.
+- **Opportunities**: Supporting details, examples, applications, or connections to \
+other fields that would enrich the coverage.
+
+**Step 5: Report.**
+Present:
+- **Coverage summary**: What exists, organized by subtopic. How many entries, \
+what types, how well connected.
+- **Gap list**: Each gap with its priority, a proposed entry title and type, \
+and a brief content outline.
+- **Suggested references**: How proposed entries would connect to existing ones.
+- **Recommended ingestion order**: Which gaps to fill first based on dependencies.
+
+If the user wants, offer to create the proposed entries.`;
 
 export function registerPrompts(server: McpServer): void {
   server.prompt(
