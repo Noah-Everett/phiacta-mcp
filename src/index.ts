@@ -82,7 +82,7 @@ function buildInstructions(plugins: import("./client.js").PluginInfo[]): string 
     "",
     "Each entry's content lives in `.phiacta/content.md` (or `.tex`, `.txt`) in its git repo. Write content via `put_entry_file` with path `.phiacta/content.md`. The identity file `.phiacta/entry.yaml` is immutable and cannot be modified.",
     "",
-    "Entries can also have supplementary files (figures, data, code) uploaded to the repo. Use `put_entry_file` with any path (e.g., `figures/diagram.png`, `data/results.csv`). Reference images in markdown content with `![alt](figures/diagram.png)` — the website resolves relative paths automatically. Link to other entries with `[Entry Title](/entries/{id})`.",
+    "Entries can also have supplementary files (figures, data, code) uploaded to the repo. Use `put_entry_file` with any path (e.g., `figures/diagram.png`, `data/results.csv`). Reference images in markdown content with `![alt](figures/diagram.png)` — the website resolves relative paths automatically. Link to other entries with `[Entry Title](/entries/{id})` — the website validates these and warns on broken links.",
     "",
     "## Entity resolve",
     "",

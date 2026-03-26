@@ -71,12 +71,18 @@ Work through your plan in dependency order — definitions first, then theorems 
 them, then results. For each atomic entry:
 
 1. **Create the entry** with title, type, summary (one sentence), and content. \
-Use markdown with inline LaTeX math ($...$ and $$...$$) for content_format — NOT \
-raw latex format. The website renders markdown with KaTeX math support.
+For content_format: use "markdown" for text-heavy entries with some math (KaTeX \
+renders $...$ and $$...$$ inline). Use "latex" for entries where the math is the \
+content (heavy equations, matrices, aligned expressions) — the website renders \
+LaTeX too. Entry types are open-ended strings — you are NOT limited to the \
+examples listed above. Use whatever type fits: "scaling-law", "method-comparison", \
+"computational-technique", "algorithm", etc.
 
 2. **Write self-contained content.** Someone reading only this entry — without the paper — \
-must understand it fully. Include all necessary context, conditions, and notation. \
-Use the paper's exact mathematical statements; do not paraphrase or weaken claims.
+must understand it fully. But do NOT duplicate other entries — link to them instead: \
+"The condition number ([Condition Number](/entries/{id})) governs..." \
+Use the paper's exact mathematical statements; do not paraphrase or weaken claims. \
+When unsure about atomicity, prefer more entries over fewer — easy to merge, hard to split.
 
 3. **Tag for discoverability.** Add tags for the field, subfield, key concepts, and \
 techniques. Include the paper's arXiv ID if applicable (e.g., arxiv:2401.12345).
@@ -126,10 +132,11 @@ or structure in text/LaTeX, and upload the original figure if available.
 
 ## Linking between entries
 
-In entry content, link to other Phiacta entries with standard markdown: \
-[Entry Title](/entries/{id}). This creates a clickable link on the website. \
-Note: this is a content link for reading convenience — always ALSO create a formal \
-reference via the references API for the knowledge graph.
+In entry content, link to other Phiacta entries with standard markdown links: \
+[Condition Number](/entries/{id}). The website validates these — broken links \
+are flagged with a warning. Always ALSO create a formal reference via the \
+references API for the knowledge graph. Content links are for readability; \
+references are for structure.
 
 ## After creating everything
 
