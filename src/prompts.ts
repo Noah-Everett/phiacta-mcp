@@ -124,6 +124,74 @@ After creating all entries, report:
 - Any pieces of the paper that were difficult to represent
 - Any observations about how well the entry format handled this paper`;
 
+const ENTRY_REVIEW_PROMPT = `You are reviewing an existing entry in the Phiacta knowledge platform \
+for accuracy, completeness, and quality.
+
+## Entry to review
+
+Look up this entry: {{entry_id}}
+
+## Review process
+
+1. **Read the entry** — get the entry detail and its content file (.phiacta/content.md or similar)
+
+2. **Check accuracy** — Is the content factually correct? Are mathematical statements precise? \
+Are there logical errors or unstated assumptions?
+
+3. **Check completeness** — Does the entry fully capture the knowledge it claims to represent? \
+Are there missing conditions, edge cases, or caveats?
+
+4. **Check references** — Are the references appropriate? Are there missing references to \
+entries that this entry depends on or relates to? Search for potentially related entries.
+
+5. **Check metadata** — Is the title precise? Is the summary accurate? Is the entry_type correct? \
+Are the tags comprehensive?
+
+6. **Report** — Summarize your findings:
+   - What is correct and well-done
+   - What needs correction (with specific suggested fixes)
+   - Missing references that should be added
+   - Suggested tag/metadata improvements
+   - Overall quality assessment
+
+If you find issues that can be fixed immediately (tags, metadata), offer to fix them. \
+For content issues, describe the problem precisely so the entry owner can address it \
+(or create an issue on the entry's repository).`;
+
+const KNOWLEDGE_GAP_PROMPT = `You are analyzing the Phiacta knowledge platform to identify gaps \
+in coverage for a given topic.
+
+## Topic to analyze
+
+{{topic}}
+
+## Process
+
+1. **Search broadly** — Search for entries related to the topic using multiple query variations. \
+Cast a wide net.
+
+2. **Map what exists** — List all found entries organized by subtopic. Note their types \
+(definition, theorem, result, etc.) and how they connect via references.
+
+3. **Identify gaps** — What's missing? Look for:
+   - Definitions that are used but not defined as entries
+   - Theorems stated without proofs
+   - Results without supporting evidence entries
+   - Missing connections between related entries
+   - Foundational concepts that lack entries
+   - Important subtopics with no coverage
+
+4. **Prioritize** — Rank the gaps by importance:
+   - **Critical**: Missing definitions or theorems that other entries reference
+   - **Important**: Key results or concepts in the topic with no entries
+   - **Nice to have**: Supporting details, examples, or minor results
+
+5. **Report** — Present:
+   - Coverage map (what exists)
+   - Gap list with priorities
+   - Suggested entries to create (with proposed titles, types, and content outlines)
+   - Suggested references between existing and proposed entries`;
+
 export function registerPrompts(server: McpServer): void {
   server.prompt(
     "paper-ingestion",
@@ -136,6 +204,40 @@ export function registerPrompts(server: McpServer): void {
           content: {
             type: "text" as const,
             text: PAPER_INGESTION_PROMPT.replace("{{paper}}", paper),
+          },
+        },
+      ],
+    })
+  );
+
+  server.prompt(
+    "entry-review",
+    "Review an existing Phiacta entry for accuracy, completeness, and quality",
+    { entry_id: z.string().describe("The UUID of the entry to review") },
+    ({ entry_id }) => ({
+      messages: [
+        {
+          role: "user" as const,
+          content: {
+            type: "text" as const,
+            text: ENTRY_REVIEW_PROMPT.replace("{{entry_id}}", entry_id),
+          },
+        },
+      ],
+    })
+  );
+
+  server.prompt(
+    "knowledge-gap",
+    "Analyze Phiacta's coverage of a topic and identify missing entries",
+    { topic: z.string().describe("The topic or field to analyze for coverage gaps") },
+    ({ topic }) => ({
+      messages: [
+        {
+          role: "user" as const,
+          content: {
+            type: "text" as const,
+            text: KNOWLEDGE_GAP_PROMPT.replace("{{topic}}", topic),
           },
         },
       ],

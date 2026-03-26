@@ -6,12 +6,20 @@
  * Handles authentication, request/response plumbing, and 401 retry.
  */
 
+export interface PluginProviderInfo {
+  fields: string[];
+  writable_fields: string[];
+  include_in_list: boolean;
+  include_in_detail: boolean;
+}
+
 export interface PluginInfo {
   name: string;
   type: string;
   version: string;
   description: string;
   depends_on: string[];
+  provider?: PluginProviderInfo | null;
 }
 
 export class PhiactaClient {

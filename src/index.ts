@@ -28,18 +28,74 @@ function buildInstructions(plugins: import("./client.js").PluginInfo[]): string 
   const lines = [
     "Phiacta is a knowledge platform where information is stored as **entries**.",
     "",
-    "An entry is a single, versioned, citable unit of knowledge. Entries are **atomic** — each one represents exactly one thing (a definition, a theorem, a claim, a result, etc.). Do not combine multiple ideas into one entry.",
+    "## Entries",
     "",
-    "Larger structures (like papers, arguments, or reviews) are represented by an entry that references its component entries.",
+    "An entry is a single, versioned, citable unit of knowledge. Each entry is backed by a git repository with immutable history. Entries are **atomic** — each one represents exactly one thing. Do not combine multiple ideas into one entry.",
     "",
-    "Use the available tools to create, search, and manage entries. Each tool's schema describes its parameters.",
+    "Larger structures (like papers, arguments, or reviews) are represented by an entry that **references** its component entries.",
+    "",
+    "## Entry fields",
+    "",
+    "Entry responses include core fields (always present: `id`, `repo_status`, `status`, `created_by`, `created_at`, `updated_at`) plus dynamic extension fields from loaded plugins.",
   ];
 
+  // Generate field docs from provider metadata
+  const withProviders = plugins.filter((p) => p.provider);
+  if (withProviders.length > 0) {
+    lines.push("");
+    lines.push("**Extension fields** (composed dynamically into entry responses):");
+    for (const p of withProviders) {
+      const prov = p.provider!;
+      const fields = prov.fields.map((f) => `\`${f}\``).join(", ");
+      const scope = prov.include_in_list ? "list + detail" : "detail only";
+      lines.push(`- **${p.name}**: ${fields} (${scope})`);
+    }
+
+    const allWritable = withProviders
+      .flatMap((p) => p.provider!.writable_fields);
+    if (allWritable.length > 0) {
+      lines.push("");
+      lines.push(
+        `**Unified PATCH**: \`update_entry\` accepts any writable extension field in a single request: ${allWritable.map((f) => `\`${f}\``).join(", ")}. Only send the fields you want to change.`
+      );
+    }
+
+    const detailOnly = withProviders.filter(
+      (p) => !p.provider!.include_in_list
+    );
+    if (detailOnly.length > 0) {
+      const names = detailOnly.map((p) => p.name).join(", ");
+      lines.push("");
+      lines.push(
+        `**Field filtering**: \`list_entries\` and \`get_entry\` support \`include\` and \`exclude\` query params (comma-separated field names). Fields from ${names} are detail-only by default — use \`include=...\` to add them to list responses. Cannot use both include and exclude at once.`
+      );
+    }
+  }
+
+  lines.push(
+    "",
+    "## Creating entries",
+    "",
+    "Use `create_entry` with at minimum a `title`. Add `entry_type`, `summary`, `content`, and `content_format` (markdown/latex/plain) as needed.",
+    "",
+    "## Entry content",
+    "",
+    "Each entry's content lives in `.phiacta/content.md` (or `.tex`, `.txt`) in its git repo. Write content via `put_entry_file` with path `.phiacta/content.md`. The identity file `.phiacta/entry.yaml` is immutable and cannot be modified.",
+    "",
+    "## Entity resolve",
+    "",
+    "`GET /v1/entities/{id}` resolves any UUID to its type (entry, user, etc.) and returns type-specific data.",
+    "",
+    "## Search",
+    "",
+    "Full-text search is available via the search tool. Search indexes entry titles and content.",
+  );
+
   if (plugins.length > 0) {
-    lines.push("", "**Loaded plugins:**");
+    lines.push("", "## Loaded plugins");
     for (const p of plugins) {
       const desc = p.description ? ` — ${p.description}` : "";
-      lines.push(`- ${p.name} (${p.type})${desc}`);
+      lines.push(`- **${p.name}** (${p.type})${desc}`);
     }
   }
 
