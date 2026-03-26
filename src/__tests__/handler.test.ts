@@ -8,7 +8,7 @@ function createMockClient(): PhiactaClient {
 }
 
 function makeTool(overrides: Partial<DiscoveredTool> = {}): DiscoveredTool {
-  return { name: "test_tool", description: "A test tool", zodSchema: {} as any, httpMethod: "get", httpPath: "/v1/test", requiresAuth: false, pathParams: [], queryParams: [], hasBody: false, annotations: {}, ...overrides };
+  return { name: "test_tool", description: "A test tool", zodSchema: {} as any, httpMethod: "get", httpPath: "/v1/test", requiresAuth: false, pathParams: [], queryParams: [], hasBody: false, annotations: {}, rawJsonSchema: { type: "object" }, ...overrides };
 }
 
 describe("createToolHandler", () => {

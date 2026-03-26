@@ -2,9 +2,10 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { PhiactaClient } from "../client.js";
 import { discoverTools } from "../discovery.js";
+import { enrichToolsWithPlugins } from "../enrich.js";
 import { createToolHandler } from "../handler.js";
 import { registerDiscoveredTools } from "../register.js";
-import { REPRESENTATIVE_OPENAPI_SPEC } from "./fixtures.js";
+import { REPRESENTATIVE_OPENAPI_SPEC, REPRESENTATIVE_PLUGINS } from "./fixtures.js";
 
 const mockFetch = vi.fn();
 beforeEach(() => { vi.stubGlobal("fetch", mockFetch); mockFetch.mockReset(); });
@@ -22,8 +23,8 @@ describe("E2E: Startup and tool registration", () => {
     const tools = discoverTools(spec);
     const server = new McpServer({ name: "phiacta-mcp", version: "0.1.0" });
     registerDiscoveredTools(server, tools, client);
-    expect(tools).toHaveLength(8);
-    expect(tools.map((t) => t.name).sort()).toEqual(["create_entry", "get_entry", "list_entries", "list_tags_for_entry", "resolve_entity", "search_entries", "set_tags", "update_entry"]);
+    expect(tools).toHaveLength(10);
+    expect(tools.map((t) => t.name).sort()).toEqual(["create_entry", "get_entry", "list_entries", "list_tags_for_entry", "resolve_entity", "search_entries", "set_metadata", "set_tags", "set_type", "update_entry"]);
   });
 
   it("logs in before fetching spec when credentials provided", async () => {
@@ -34,7 +35,7 @@ describe("E2E: Startup and tool registration", () => {
     const tools = discoverTools(await client.fetchOpenApiSpec());
     expect(mockFetch).toHaveBeenCalledTimes(2);
     expect(mockFetch.mock.calls[0][0]).toContain("/v1/auth/login");
-    expect(tools.length).toBe(8);
+    expect(tools.length).toBe(10);
   });
 
   it("fails when backend is unreachable", async () => {
@@ -151,9 +152,10 @@ describe("E2E: Error handling", () => {
 });
 
 describe("E2E: Schema validation", () => {
-  it("rejects invalid input", async () => {
+  it("rejects create_entry without title after enrichment", async () => {
     mockFetch.mockResolvedValueOnce(jsonResponse(REPRESENTATIVE_OPENAPI_SPEC));
     const tools = discoverTools(await new PhiactaClient("http://localhost:8000").fetchOpenApiSpec());
+    enrichToolsWithPlugins(tools, REPRESENTATIVE_PLUGINS);
     expect(tools.find((t) => t.name === "create_entry")!.zodSchema.safeParse({ summary: "No title" }).success).toBe(false);
   });
   it("accepts valid input", async () => {

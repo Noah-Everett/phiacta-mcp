@@ -9,8 +9,16 @@
 export interface PluginProviderInfo {
   fields: string[];
   writable_fields: string[];
+  required_on_create: string[];
   include_in_list: boolean;
   include_in_detail: boolean;
+}
+
+export interface DocInfo {
+  name: string;
+  slug: string;
+  description: string;
+  content: string;
 }
 
 export interface PluginInfo {
@@ -98,6 +106,15 @@ export class PhiactaClient {
       return []; // graceful fallback if endpoint unavailable
     }
     return resp.json() as Promise<PluginInfo[]>;
+  }
+
+  async fetchDocs(): Promise<DocInfo[]> {
+    const url = `${this.baseUrl}/v1/docs`;
+    const resp = await fetch(url, { method: "GET" });
+    if (!resp.ok) {
+      return []; // graceful fallback if endpoint unavailable
+    }
+    return resp.json() as Promise<DocInfo[]>;
   }
 
   async callApi(

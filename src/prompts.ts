@@ -17,134 +17,53 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
-const PAPER_INGESTION_PROMPT = `You are extracting structured knowledge from an academic paper \
-into the Phiacta knowledge platform.
+const PAPER_INGESTION_PROMPT = `You are extracting structured knowledge from an academic \
+paper into Phiacta.
+
+Read the Phiacta MCP resources before starting — they document entry types, reference \
+roles, content formats, tag conventions, and content writing guidelines.
 
 ## Input
 
-The user has provided: {{paper}}
+{{paper}}
 
-Read this first. If it's a file path or directory, read the files. If it's raw text, use it \
-directly. Read the **full paper** before doing anything else.
+Read the **full paper** before doing anything else.
 
-## Goal
+## Workflow
 
-Every atomic piece of knowledge in the paper becomes its own entry. An entry represents \
-exactly ONE thing — a definition, a theorem, a result, an observation. Never combine \
-multiple ideas into one entry.
+### 1. Search
 
-The paper itself becomes an **argument** entry that references all the atomic entries, \
-organizing them into the paper's logical structure. Create this last.
+Search Phiacta for this paper's title, key terms, and author names. Note any existing \
+entries you can reference instead of duplicating. Also search for definitions or results \
+from prior work that your new entries will cite.
 
-## Before creating anything
+### 2. Plan
 
-1. **Search first.** Search Phiacta for this paper's title, key terms, and author names. \
-If entries already exist for this paper, reference them instead of duplicating.
+Write a numbered list of every entry to create: proposed title, entry type, and which \
+other entries it references (by list number and by existing Phiacta ID). This maps the \
+dependency structure before you touch the API.
 
-2. **Search for reference targets.** The entries you create will cite prior work. Search \
-for definitions, theorems, or results from other papers that are already in Phiacta. \
-Note their IDs — you'll create references to them later.
+### 3. Create the paper entry
 
-3. **Plan the full extraction.** Write out a numbered list of every entry you intend to \
-create, with:
-   - Proposed title (concise, precise)
-   - Entry type (definition, theorem, lemma, proposition, corollary, conjecture, \
-     empirical, methodology, observation, assumption, assertion, proof, argument, \
-     refutation, hypothesis)
-   - Which other entries in your list it references (by number)
-   - Which existing Phiacta entries it references (by ID)
+Create an entry with type "argument" (title, summary, content, tags — all in one call). \
+Wait for repo_status = "ready", then **archive** it. It stays hidden until everything \
+is wired up.
 
-This plan is critical. It maps the paper's dependency structure before you touch the API. \
-Get it right before proceeding.
+### 4. Create atomic entries in dependency order
 
-## Creating entries
+For each entry in your plan:
 
-### Step A: Create the paper entry first
+1. **Create in a single call** with all fields (title, entry_type, summary, tags, \
+content, content_format). Do not make separate calls to set metadata.
+2. **Create references** — the one thing that requires a separate call, since the \
+target must exist. Create inter-atomic refs and a paper-to-atomic ref.
 
-Create the argument/paper entry immediately with its title, summary, and type "argument". \
-Wait for it to become ready (repo_status = "ready"), then **archive it**. This keeps it \
-hidden from browse until all atomic entries and references are in place.
+### 5. Unarchive the paper entry
 
-### Step B: Create atomic entries with references
+### 6. Report
 
-Work through your plan in dependency order — definitions first, then theorems that use \
-them, then results. For each atomic entry:
-
-1. **Create the entry** with title, type, summary (one sentence), and content. \
-For content_format: use "markdown" for text-heavy entries with some math (KaTeX \
-renders $...$ and $$...$$ inline). Use "latex" for entries where the math is the \
-content (heavy equations, matrices, aligned expressions) — the website renders \
-LaTeX too. Entry types are open-ended strings — you are NOT limited to the \
-examples listed above. Use whatever type fits: "scaling-law", "method-comparison", \
-"computational-technique", "algorithm", etc.
-
-2. **Write self-contained content.** Someone reading only this entry — without the paper — \
-must understand it fully. But do NOT duplicate other entries — link to them instead: \
-"The condition number ([Condition Number](/entries/{id})) governs..." \
-Use the paper's exact mathematical statements; do not paraphrase or weaken claims. \
-When unsure about atomicity, prefer more entries over fewer — easy to merge, hard to split.
-
-3. **Tag for discoverability.** Add tags for the field, subfield, key concepts, and \
-techniques. Include the paper's arXiv ID if applicable (e.g., arxiv:2401.12345).
-
-4. **Create references immediately** after creating each entry. Use the references API \
-(the references extension endpoint) — do NOT just mention entry IDs in content text. \
-For each new entry, create:
-   - **Inter-atomic references**: if this entry depends on earlier entries (e.g., a \
-     theorem uses a definition), create those references now.
-   - **Paper reference**: create a reference from the paper entry to this atomic entry. \
-     The paper entry is archived but references still work on archived entries.
-   - Use relation types: "cites", "derives_from", "supports", "evidence", "context".
-
-### Step C: Unarchive the paper entry
-
-After all atomic entries and references are created, **unarchive** the paper entry. \
-It is now complete with references to every atomic entry in the knowledge graph.
-
-## What to extract
-
-Be exhaustive. When in doubt, make it an entry.
-
-- Every **definition** — defined terms, quantities, concepts
-- Every **theorem, lemma, proposition, corollary** — exact statements
-- Every **conjecture** — unproven claims
-- Every **methodological claim** — "our method achieves X"
-- Every **empirical result** — specific numbers, benchmarks, comparisons
-- Every **negative result** — what didn't work, limitations
-- Every **key observation** — important insights or remarks
-- Every **assumption** — stated conditions or constraints
-- **Notation conventions** if they define notation used throughout
-- **Software tools and packages** — these ARE knowledge. AMFlow, SOFIA, etc. are \
-methodologies/definitions. Create entries for them.
-
-## Figures and visual content
-
-Entries can have supplementary files. If the paper contains figures, diagrams, or plots:
-
-1. **Upload the file** to the entry's repo (e.g., path "figures/diagram.png")
-2. **Reference it in content** with markdown: ![description](figures/diagram.png) \
-The website renders these inline automatically.
-3. **Describe the content textually** too — someone reading the text should understand \
-the key information even without seeing the figure.
-
-For Feynman diagrams, flow charts, or other visual structures: describe the topology \
-or structure in text/LaTeX, and upload the original figure if available.
-
-## Linking between entries
-
-In entry content, link to other Phiacta entries with standard markdown links: \
-[Condition Number](/entries/{id}). The website validates these — broken links \
-are flagged with a warning. Always ALSO create a formal reference via the \
-references API for the knowledge graph. Content links are for readability; \
-references are for structure.
-
-## After creating everything
-
-Report:
-- Total entries created, broken down by type
-- The argument entry's ID (the paper entry)
-- Existing Phiacta entries that were linked to
-- External references that couldn't be linked (candidates for future ingestion)`;
+Total entries by type, the paper entry ID, existing entries linked to, and external \
+references that could not be linked (candidates for future ingestion).`;
 
 const ENTRY_REVIEW_PROMPT = `You are reviewing an entry in the Phiacta knowledge platform. \
 Your job is to assess its accuracy, completeness, and quality, then suggest or make \

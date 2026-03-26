@@ -2,6 +2,53 @@
  * Shared test fixtures for MCP auto-discovery tests.
  */
 
+import type { PluginInfo } from "../client.js";
+
+export const REPRESENTATIVE_PLUGINS: PluginInfo[] = [
+  {
+    name: "metadata",
+    type: "extension",
+    version: "1.0.0",
+    description: "Entry title and summary",
+    depends_on: [],
+    provider: {
+      fields: ["summary", "title"],
+      writable_fields: ["summary", "title"],
+      required_on_create: ["title"],
+      include_in_list: true,
+      include_in_detail: true,
+    },
+  },
+  {
+    name: "tags",
+    type: "extension",
+    version: "1.0.0",
+    description: "User-authored entry classifications",
+    depends_on: [],
+    provider: {
+      fields: ["tags"],
+      writable_fields: ["tags"],
+      required_on_create: [],
+      include_in_list: true,
+      include_in_detail: true,
+    },
+  },
+  {
+    name: "types",
+    type: "extension",
+    version: "1.0.0",
+    description: "Entry type classification",
+    depends_on: [],
+    provider: {
+      fields: ["entry_type"],
+      writable_fields: ["entry_type"],
+      required_on_create: [],
+      include_in_list: true,
+      include_in_detail: true,
+    },
+  },
+];
+
 export const REPRESENTATIVE_OPENAPI_SPEC = {
   openapi: "3.1.0",
   info: { title: "Phiacta", version: "0.1.0" },
@@ -111,6 +158,57 @@ export const REPRESENTATIVE_OPENAPI_SPEC = {
                 type: "object",
                 required: ["tags"],
                 properties: { tags: { type: "array", items: { type: "string" } } },
+              },
+            },
+          },
+        },
+        responses: { "200": { description: "Successful Response" } },
+      },
+    },
+    "/v1/extensions/metadata/{entry_id}": {
+      put: {
+        operationId: "set_metadata_v1_extensions_metadata__entry_id__put",
+        summary: "Set Metadata",
+        description: "Set title and summary on an entry.",
+        security: [{ Bearer: [] }],
+        parameters: [
+          { name: "entry_id", in: "path", required: true, schema: { type: "string", format: "uuid" } },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["title"],
+                properties: {
+                  title: { type: "string", maxLength: 500 },
+                  summary: { anyOf: [{ type: "string", maxLength: 2000 }, { type: "null" }] },
+                },
+              },
+            },
+          },
+        },
+        responses: { "200": { description: "Successful Response" } },
+      },
+    },
+    "/v1/extensions/types/{entry_id}": {
+      put: {
+        operationId: "set_type_v1_extensions_types__entry_id__put",
+        summary: "Set Type",
+        description: "Set the entry type.",
+        security: [{ Bearer: [] }],
+        parameters: [
+          { name: "entry_id", in: "path", required: true, schema: { type: "string", format: "uuid" } },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["entry_type"],
+                properties: { entry_type: { type: "string", maxLength: 100 } },
               },
             },
           },

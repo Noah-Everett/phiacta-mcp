@@ -47,9 +47,9 @@ describe("discoverTools", () => {
   describe("route filtering", () => {
     it("discovers only /v1/ routes, excluding /v1/auth/* and non-/v1/", () => {
       const tools = discoverTools(REPRESENTATIVE_OPENAPI_SPEC);
-      expect(tools).toHaveLength(8);
+      expect(tools).toHaveLength(10);
       const names = tools.map((t) => t.name).sort();
-      expect(names).toEqual(["create_entry", "get_entry", "list_entries", "list_tags_for_entry", "resolve_entity", "search_entries", "set_tags", "update_entry"]);
+      expect(names).toEqual(["create_entry", "get_entry", "list_entries", "list_tags_for_entry", "resolve_entity", "search_entries", "set_metadata", "set_tags", "set_type", "update_entry"]);
     });
     it("excludes auth login route", () => {
       const names = discoverTools(REPRESENTATIVE_OPENAPI_SPEC).map((t) => t.name);
@@ -160,8 +160,9 @@ describe("discoverTools", () => {
     it("accepts body parameters for POST", () => {
       expect(findTool(discoverTools(REPRESENTATIVE_OPENAPI_SPEC), "create_entry").zodSchema.safeParse({ title: "Test", summary: "A test", entry_type: "assertion" }).success).toBe(true);
     });
-    it("requires mandatory fields", () => {
-      expect(findTool(discoverTools(REPRESENTATIVE_OPENAPI_SPEC), "create_entry").zodSchema.safeParse({ summary: "Missing title" }).success).toBe(false);
+    it("accepts extra fields on create_entry (extension fields pass through additionalProperties)", () => {
+      // title is NOT required at the OpenAPI level — it becomes required after enrichment with plugin metadata
+      expect(findTool(discoverTools(REPRESENTATIVE_OPENAPI_SPEC), "create_entry").zodSchema.safeParse({ summary: "No title" }).success).toBe(true);
     });
     it("requires mandatory query params", () => {
       expect(findTool(discoverTools(REPRESENTATIVE_OPENAPI_SPEC), "search_entries").zodSchema.safeParse({ limit: 10 }).success).toBe(false);
@@ -212,11 +213,11 @@ describe("discoverTools", () => {
       expect(result.success).toBe(true);
     });
 
-    it("requires mandatory fields from $ref body schemas", () => {
+    it("accepts extra fields on $ref body schemas (extension fields pass through)", () => {
       const tools = discoverTools(SPEC_WITH_REFS);
       const createEntry = findTool(tools, "create_entry");
       const result = createEntry.zodSchema.safeParse({ summary: "No title" });
-      expect(result.success).toBe(false);
+      expect(result.success).toBe(true);
     });
 
     it("merges path params with $ref body schemas", () => {
