@@ -51,6 +51,15 @@ function buildInstructions(plugins: import("./client.js").PluginInfo[]): string 
       lines.push(`- **${p.name}**: ${fields} (${scope})`);
     }
 
+    const allRequired = withProviders
+      .flatMap((p) => p.provider!.required_on_create ?? []);
+    if (allRequired.length > 0) {
+      lines.push("");
+      lines.push(
+        `**Required on create**: ${allRequired.map((f) => `\`${f}\``).join(", ")}. These fields must be included when calling \`create_entry\`.`
+      );
+    }
+
     const allWritable = withProviders
       .flatMap((p) => p.provider!.writable_fields);
     if (allWritable.length > 0) {
@@ -76,7 +85,7 @@ function buildInstructions(plugins: import("./client.js").PluginInfo[]): string 
     "",
     "## Creating entries",
     "",
-    "Use `create_entry` with at minimum a `title`. Add `entry_type`, `summary`, `content`, and `content_format` (markdown/latex/plain) as needed.",
+    "Use `create_entry` with extension fields as needed. Required fields are declared by each plugin's `required_on_create` (e.g., the metadata plugin requires `title`). Common fields: `title`, `summary`, `entry_type`, `tags`, `content`, `content_format` (markdown/latex/plain).",
     "",
     "## Entry content and files",
     "",

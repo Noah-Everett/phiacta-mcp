@@ -9,6 +9,7 @@
 export interface PluginProviderInfo {
   fields: string[];
   writable_fields: string[];
+  required_on_create: string[];
   include_in_list: boolean;
   include_in_detail: boolean;
 }

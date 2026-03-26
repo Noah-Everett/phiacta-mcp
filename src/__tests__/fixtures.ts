@@ -31,11 +31,9 @@ export const REPRESENTATIVE_OPENAPI_SPEC = {
             "application/json": {
               schema: {
                 type: "object",
-                required: ["title"],
                 properties: {
-                  title: { type: "string" },
-                  summary: { anyOf: [{ type: "string" }, { type: "null" }] },
-                  entry_type: { type: "string", default: "assertion" },
+                  content: { anyOf: [{ type: "string" }, { type: "null" }] },
+                  content_format: { type: "string", default: "markdown" },
                 },
               },
             },
@@ -267,11 +265,9 @@ export const SPEC_WITH_REFS = {
     schemas: {
       EntryCreate: {
         type: "object",
-        required: ["title"],
         properties: {
-          title: { type: "string" },
-          summary: { anyOf: [{ type: "string" }, { type: "null" }] },
-          entry_type: { type: "string", default: "assertion" },
+          content: { anyOf: [{ type: "string" }, { type: "null" }] },
+          content_format: { type: "string", default: "markdown" },
         },
       },
       SetTagsRequest: {
