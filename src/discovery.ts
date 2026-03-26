@@ -23,8 +23,8 @@ export interface DiscoveredTool {
   pathParams: string[];
   queryParams: string[];
   hasBody: boolean;
+  isMultipart: boolean;
   annotations: Record<string, boolean>;
-  /** Raw JSON Schema before zod conversion — used for post-discovery enrichment. */
   rawJsonSchema: any;
 }
 
@@ -114,7 +114,49 @@ export function discoverTools(openApiSpec: any): DiscoveredTool[] {
     }
   }
 
+  // Post-process: enrich multipart upload tools with MCP-only parameters.
+  enrichMultipartTools(tools);
+
   return tools;
+}
+
+/**
+ * Enrich multipart upload tools with MCP-only parameters.
+ *
+ * Replaces the binary `content` field from the OpenAPI spec with:
+ * - `content` (string): raw text content, encoded to UTF-8 by the handler
+ * - `file_path` (string): local file path, read by the handler
+ *
+ * These are MCP-layer convenience parameters — the backend only sees
+ * multipart file bytes regardless of source.
+ */
+function enrichMultipartTools(tools: DiscoveredTool[]): void {
+  for (const tool of tools) {
+    if (!tool.isMultipart) continue;
+
+    const schema = tool.rawJsonSchema;
+    if (!schema?.properties) continue;
+
+    // Replace the binary content field with text content + file_path
+    schema.properties.content = {
+      type: "string",
+      description: "Raw text content to upload. The handler encodes it to UTF-8 bytes.",
+    };
+    schema.properties.file_path = {
+      type: "string",
+      description: "Local file path to upload. Must be within the current working directory.",
+    };
+
+    // content is no longer strictly required — one of content or file_path is
+    if (schema.required) {
+      schema.required = schema.required.filter((r: string) => r !== "content");
+    }
+
+    // Rebuild zod schema from the enriched JSON schema
+    tool.zodSchema = fromJSONSchema(schema, {
+      defaultTarget: "draft-2020-12",
+    });
+  }
 }
 
 // Body schemas must be object type (or omit type entirely)
@@ -150,7 +192,11 @@ function buildTool(spec: any, path: string, method: string, operation: any): Dis
   }
 
   const hasBody = !!operation.requestBody;
-  const rawBodySchema = operation.requestBody?.content?.["application/json"]?.schema;
+  const requestContent = operation.requestBody?.content;
+  const isMultipart = !!requestContent?.["multipart/form-data"];
+  const rawBodySchema =
+    requestContent?.["application/json"]?.schema ??
+    requestContent?.["multipart/form-data"]?.schema;
   // Resolve $ref pointers before accessing properties
   const bodySchema = rawBodySchema ? resolveRefs(spec, rawBodySchema) : undefined;
 
@@ -231,6 +277,7 @@ function buildTool(spec: any, path: string, method: string, operation: any): Dis
     pathParams,
     queryParams,
     hasBody,
+    isMultipart,
     annotations,
     rawJsonSchema: mergedSchema,
   };

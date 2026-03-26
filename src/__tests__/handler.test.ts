@@ -4,11 +4,11 @@ import type { DiscoveredTool } from "../discovery.js";
 import type { PhiactaClient } from "../client.js";
 
 function createMockClient(): PhiactaClient {
-  return { callApi: vi.fn(), login: vi.fn(), fetchOpenApiSpec: vi.fn() } as unknown as PhiactaClient;
+  return { callApi: vi.fn(), login: vi.fn(), fetchOpenApiSpec: vi.fn(), fetchPlugins: vi.fn(), uploadFile: vi.fn() } as unknown as PhiactaClient;
 }
 
 function makeTool(overrides: Partial<DiscoveredTool> = {}): DiscoveredTool {
-  return { name: "test_tool", description: "A test tool", zodSchema: {} as any, httpMethod: "get", httpPath: "/v1/test", requiresAuth: false, pathParams: [], queryParams: [], hasBody: false, annotations: {}, rawJsonSchema: { type: "object" }, ...overrides };
+  return { name: "test_tool", description: "A test tool", zodSchema: {} as any, httpMethod: "get", httpPath: "/v1/test", requiresAuth: false, pathParams: [], queryParams: [], hasBody: false, isMultipart: false, annotations: {}, rawJsonSchema: { type: "object" }, ...overrides };
 }
 
 describe("createToolHandler", () => {

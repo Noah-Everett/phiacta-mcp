@@ -30,6 +30,19 @@ export interface PluginInfo {
   provider?: PluginProviderInfo | null;
 }
 
+const IDEMPOTENT_METHODS = new Set(["GET", "PUT", "DELETE", "HEAD"]);
+const RETRYABLE_STATUS_CODES = new Set([502, 503, 504]);
+const MAX_RETRIES = 3;
+const BASE_DELAY_MS = 1000;
+
+function isRetryable(method: string, status: number): boolean {
+  return IDEMPOTENT_METHODS.has(method.toUpperCase()) && RETRYABLE_STATUS_CODES.has(status);
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export class PhiactaClient {
   private baseUrl: string;
   private token: string | null = null;
@@ -127,13 +140,93 @@ export class PhiactaClient {
     return this._callApiInner(method, path, params, body, auth, false);
   }
 
+  /**
+   * Upload a file via multipart/form-data.
+   *
+   * The file bytes are sent as the "content" form part, and an optional
+   * commit message is sent as the "message" form field.
+   * Content-Type is NOT set manually — the Fetch API sets it automatically
+   * with the correct multipart boundary.
+   */
+  async uploadFile(
+    path: string,
+    fileBytes: Uint8Array,
+    message?: string,
+    method: string = "PUT",
+  ): Promise<unknown> {
+    return this._uploadFileInner(path, fileBytes, message, method, false);
+  }
+
+  private async _uploadFileInner(
+    path: string,
+    fileBytes: Uint8Array,
+    message: string | undefined,
+    method: string,
+    isRetry: boolean,
+    attempt: number = 0,
+  ): Promise<unknown> {
+    const url = `${this.baseUrl}${path}`;
+
+    const formData = new FormData();
+    formData.append("content", new Blob([fileBytes]), "file");
+    if (message !== undefined) {
+      formData.append("message", message);
+    }
+
+    const headers: Record<string, string> = {};
+    if (this.token) {
+      headers["Authorization"] = `Bearer ${this.token}`;
+    }
+    // Do NOT set Content-Type — Fetch API handles multipart boundary
+
+    const resp = await fetch(url, {
+      method: method.toUpperCase(),
+      headers,
+      body: formData,
+    });
+
+    // 401 retry: re-authenticate once with stored credentials
+    if (resp.status === 401 && !isRetry && this.handle && this.password) {
+      try {
+        await this.login(this.handle, this.password);
+        return this._uploadFileInner(path, fileBytes, message, method, true, attempt);
+      } catch {
+        // Re-auth failed, fall through to normal error handling
+      }
+    }
+
+    // Retry with exponential backoff on transient 5xx for idempotent methods
+    if (isRetryable(method, resp.status) && attempt < MAX_RETRIES) {
+      await sleep(BASE_DELAY_MS * Math.pow(2, attempt));
+      return this._uploadFileInner(path, fileBytes, message, method, isRetry, attempt + 1);
+    }
+
+    if (!resp.ok) {
+      let detail: string;
+      try {
+        const err = (await resp.json()) as { detail?: string };
+        detail = err.detail ?? resp.statusText;
+      } catch {
+        detail = resp.statusText;
+      }
+      throw new Error(`HTTP ${resp.status}: ${detail}`);
+    }
+
+    const contentType = resp.headers.get("Content-Type") ?? "";
+    if (contentType.includes("application/json")) {
+      return resp.json();
+    }
+    return resp.text();
+  }
+
   private async _callApiInner(
     method: string,
     path: string,
     params: Record<string, any> | undefined,
     body: unknown | undefined,
     auth: boolean | undefined,
-    isRetry: boolean
+    isRetry: boolean,
+    attempt: number = 0,
   ): Promise<unknown> {
     const url = new URL(`${this.baseUrl}${path}`);
     if (params) {
@@ -161,10 +254,16 @@ export class PhiactaClient {
     if (resp.status === 401 && !isRetry && auth !== false && this.handle && this.password) {
       try {
         await this.login(this.handle, this.password);
-        return this._callApiInner(method, path, params, body, auth, true);
+        return this._callApiInner(method, path, params, body, auth, true, attempt);
       } catch {
         // Re-auth failed, fall through to normal error handling
       }
+    }
+
+    // Retry with exponential backoff on transient 5xx for idempotent methods
+    if (isRetryable(method, resp.status) && attempt < MAX_RETRIES) {
+      await sleep(BASE_DELAY_MS * Math.pow(2, attempt));
+      return this._callApiInner(method, path, params, body, auth, isRetry, attempt + 1);
     }
 
     if (!resp.ok) {
