@@ -18,16 +18,45 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { PhiactaClient } from "./client.js";
 import { discoverTools } from "./discovery.js";
+import { enrichToolsWithPlugins } from "./enrich.js";
 import { registerDiscoveredTools } from "./register.js";
 import { registerPrompts } from "./prompts.js";
+import { registerResources } from "./resources.js";
 
 const API_URL = process.env.PHIACTA_API_URL ?? "https://api.phiacta.com";
 const PHIACTA_TOKEN = process.env.PHIACTA_TOKEN ?? "";
 const PHIACTA_HANDLE = process.env.PHIACTA_HANDLE ?? "";
 const PHIACTA_PASSWORD = process.env.PHIACTA_PASSWORD ?? "";
 
-function buildInstructions(plugins: import("./client.js").PluginInfo[]): string {
-  const lines = [
+function buildInstructions(plugins: import("./client.js").PluginInfo[], authenticated: boolean): string {
+  const lines: string[] = [];
+
+  if (!authenticated) {
+    lines.push(
+      "## Setup required",
+      "",
+      "This MCP server is running **unauthenticated**. Read-only tools work, but you cannot create or modify entries.",
+      "",
+      "To authenticate:",
+      "1. Create an account at the Phiacta website (sign up page)",
+      "2. Go to **Settings > Tokens** and create a personal access token",
+      "3. Add the token to your MCP configuration:",
+      "",
+      '```json',
+      '"env": {',
+      '  "PHIACTA_API_URL": "' + API_URL + '",',
+      '  "PHIACTA_TOKEN": "pat_..."',
+      '}',
+      '```',
+      "",
+      "4. Restart the MCP server",
+      "",
+      "---",
+      "",
+    );
+  }
+
+  lines.push(
     "Phiacta is a knowledge platform where information is stored as **entries**.",
     "",
     "## Entries",
@@ -39,7 +68,7 @@ function buildInstructions(plugins: import("./client.js").PluginInfo[]): string 
     "## Entry fields",
     "",
     "Entry responses include core fields (always present: `id`, `repo_status`, `status`, `created_by`, `created_at`, `updated_at`) plus dynamic extension fields from loaded plugins.",
-  ];
+  );
 
   // Generate field docs from provider metadata
   const withProviders = plugins.filter((p) => p.provider);
@@ -114,6 +143,8 @@ async function main() {
     await client.login(PHIACTA_HANDLE, PHIACTA_PASSWORD);
   }
 
+  const authenticated = !!client.getToken();
+
   // Fetch plugins for dynamic instructions
   const plugins = await client.fetchPlugins();
 
@@ -123,19 +154,22 @@ async function main() {
       version: "0.1.0",
     },
     {
-      instructions: buildInstructions(plugins),
+      instructions: buildInstructions(plugins, authenticated),
     }
   );
 
-  // Fetch OpenAPI spec and discover tools
+  // Fetch OpenAPI spec, discover tools, enrich with extension fields
   const spec = await client.fetchOpenApiSpec();
   const tools = discoverTools(spec);
+  enrichToolsWithPlugins(tools, plugins);
 
-  // Register all discovered tools
+  // Fetch docs for MCP resources (graceful no-op if endpoint unavailable)
+  const docs = await client.fetchDocs();
+
+  // Register all discovered tools, prompts, and resources
   registerDiscoveredTools(server, tools, client);
-
-  // Register prompts
   registerPrompts(server);
+  registerResources(server, docs);
 
   console.error(
     `Discovered ${tools.length} tools: ${tools.map((t) => t.name).join(", ")}`
