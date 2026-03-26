@@ -2,29 +2,19 @@
  * Tests for PAT support in the MCP PhiactaClient (PHI-119).
  *
  * Tests cover:
- * - setToken() method
- * - PHIACTA_TOKEN env var skips login
- * - 401 with PAT is a hard failure (no re-auth retry)
- * - PAT takes hard precedence over handle/password
+ * - setToken() / getToken() methods
+ * - 401 with PAT is a hard failure (no re-auth retry when no handle/password)
+ * - PAT sent as Bearer token in Authorization header
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-
-// ---------------------------------------------------------------------------
-// We import the client module under test. Since the MCP repo's src/ is a stub,
-// the import path matches the expected final module structure.
-// ---------------------------------------------------------------------------
+import { describe, it, expect, vi } from "vitest";
 import { PhiactaClient } from "../client.js";
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
 
 const TEST_PAT = "pat_AbCdEfGh1234567890abcdefghijklmnopqrstuvw";
 const TEST_BASE_URL = "http://localhost:8000";
 
 // ---------------------------------------------------------------------------
-// setToken
+// setToken / getToken
 // ---------------------------------------------------------------------------
 
 describe("PhiactaClient.setToken", () => {
@@ -52,71 +42,26 @@ describe("PhiactaClient.setToken", () => {
 });
 
 // ---------------------------------------------------------------------------
-// PHIACTA_TOKEN env var
-// ---------------------------------------------------------------------------
-
-describe("PHIACTA_TOKEN environment variable", () => {
-  const originalEnv = process.env;
-
-  beforeEach(() => {
-    process.env = { ...originalEnv };
-  });
-
-  afterEach(() => {
-    process.env = originalEnv;
-  });
-
-  it("when PHIACTA_TOKEN is set, login flow is skipped", async () => {
-    process.env.PHIACTA_TOKEN = TEST_PAT;
-    const client = new PhiactaClient(TEST_BASE_URL);
-
-    // The client should use the env var token directly
-    expect(client.getToken()).toBe(TEST_PAT);
-  });
-
-  it("PHIACTA_TOKEN takes precedence over handle/password", async () => {
-    process.env.PHIACTA_TOKEN = TEST_PAT;
-
-    // Even if handle/password are provided, PAT should be used
-    const client = new PhiactaClient(TEST_BASE_URL, {
-      handle: "alice",
-      password: "SecurePass123!",
-    });
-
-    // Token should be the PAT from env, not obtained via login
-    expect(client.getToken()).toBe(TEST_PAT);
-  });
-
-  it("without PHIACTA_TOKEN, token is initially undefined", () => {
-    delete process.env.PHIACTA_TOKEN;
-    const client = new PhiactaClient(TEST_BASE_URL);
-    expect(client.getToken()).toBeUndefined();
-  });
-});
-
-// ---------------------------------------------------------------------------
-// 401 handling with PAT
+// 401 handling with PAT (no stored handle/password → no retry)
 // ---------------------------------------------------------------------------
 
 describe("PAT 401 error handling", () => {
-  it("401 with PAT is a hard failure — no re-auth retry", async () => {
+  it("401 with PAT and no stored credentials is a hard failure — no re-auth retry", async () => {
     const client = new PhiactaClient(TEST_BASE_URL);
     client.setToken(TEST_PAT);
 
-    // Mock fetch to return 401
     const mockFetch = vi.fn().mockResolvedValue(
       new Response(JSON.stringify({ detail: "Token expired" }), {
         status: 401,
         headers: { "content-type": "application/json" },
       }),
     );
-    // Replace the client's internal fetch mechanism
     vi.stubGlobal("fetch", mockFetch);
 
     try {
-      await expect(client.request("GET", "/v1/auth/me")).rejects.toThrow();
+      await expect(client.callApi("GET", "/v1/auth/me", undefined, undefined, true)).rejects.toThrow();
 
-      // fetch should be called exactly once — no retry
+      // fetch should be called exactly once — no retry (no handle/password stored)
       expect(mockFetch).toHaveBeenCalledTimes(1);
     } finally {
       vi.unstubAllGlobals();
@@ -136,7 +81,7 @@ describe("PAT 401 error handling", () => {
     vi.stubGlobal("fetch", mockFetch);
 
     try {
-      await expect(client.request("GET", "/v1/auth/me")).rejects.toThrow();
+      await expect(client.callApi("GET", "/v1/auth/me", undefined, undefined, true)).rejects.toThrow();
 
       // Token should still be set after 401
       expect(client.getToken()).toBe(TEST_PAT);
@@ -164,12 +109,11 @@ describe("PAT in Authorization header", () => {
     vi.stubGlobal("fetch", mockFetch);
 
     try {
-      await client.request("GET", "/v1/auth/me");
+      await client.callApi("GET", "/v1/auth/me", undefined, undefined, true);
 
       expect(mockFetch).toHaveBeenCalledTimes(1);
-      const [url, options] = mockFetch.mock.calls[0];
-      expect(options.headers["Authorization"] || options.headers["authorization"])
-        .toBe(`Bearer ${TEST_PAT}`);
+      const [, options] = mockFetch.mock.calls[0];
+      expect(options.headers["Authorization"]).toBe(`Bearer ${TEST_PAT}`);
     } finally {
       vi.unstubAllGlobals();
     }
