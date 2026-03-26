@@ -24,6 +24,8 @@ export interface DiscoveredTool {
   queryParams: string[];
   hasBody: boolean;
   annotations: Record<string, boolean>;
+  /** Raw JSON Schema before zod conversion — used for post-discovery enrichment. */
+  rawJsonSchema: any;
 }
 
 /**
@@ -41,7 +43,7 @@ export function cleanToolName(operationId: string): string {
  * Format validation is the backend's responsibility — the MCP schema
  * should be permissive to avoid rejecting valid LLM inputs.
  */
-function stripFormat(schema: any): any {
+export function stripFormat(schema: any): any {
   if (!schema || typeof schema !== "object") return schema;
   const { format, ...rest } = schema;
   return rest;
@@ -91,7 +93,8 @@ export function discoverTools(openApiSpec: any): DiscoveredTool[] {
 
   for (const [path, pathItem] of Object.entries<any>(paths)) {
     if (!path.startsWith("/v1/")) continue;
-    if (path.startsWith("/v1/auth/")) continue;
+    // Skip auth endpoints except /me (useful for "whoami")
+    if (path.startsWith("/v1/auth/") && path !== "/v1/auth/me") continue;
 
     for (const method of HTTP_METHODS) {
       const operation = pathItem?.[method];
@@ -229,5 +232,6 @@ function buildTool(spec: any, path: string, method: string, operation: any): Dis
     queryParams,
     hasBody,
     annotations,
+    rawJsonSchema: mergedSchema,
   };
 }

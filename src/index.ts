@@ -103,11 +103,26 @@ function buildInstructions(plugins: import("./client.js").PluginInfo[], authenti
     }
   }
 
+  // Dynamic "Creating entries" section based on loaded plugins
+  const createFields: string[] = ["content", "content_format"];
+  const requiredOnCreate: string[] = [];
+  for (const p of withProviders) {
+    const prov = p.provider!;
+    createFields.push(...prov.writable_fields);
+    if (prov.required_on_create?.length) {
+      requiredOnCreate.push(...prov.required_on_create);
+    }
+  }
+
   lines.push(
     "",
     "## Creating entries",
     "",
-    "Use `create_entry` with at minimum a `title`. Add `entry_type`, `summary`, `content`, and `content_format` (markdown/latex/plain) as needed.",
+    `Use \`create_entry\` with available fields: ${createFields.map((f) => `\`${f}\``).join(", ")}.` +
+      (requiredOnCreate.length > 0
+        ? ` Required: ${requiredOnCreate.map((f) => `\`${f}\``).join(", ")}.`
+        : "") +
+      " All other fields are optional. Entry types and tag values are open-ended strings — use whatever fits.",
     "",
     "## Entry content",
     "",
