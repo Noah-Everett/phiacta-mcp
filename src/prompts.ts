@@ -59,12 +59,20 @@ Get it right before proceeding.
 
 ## Creating entries
 
+### Step A: Create the paper entry first
+
+Create the argument/paper entry immediately with its title, summary, and type "argument". \
+Wait for it to become ready (repo_status = "ready"), then **archive it**. This keeps it \
+hidden from browse until all atomic entries and references are in place.
+
+### Step B: Create atomic entries with references
+
 Work through your plan in dependency order — definitions first, then theorems that use \
-them, then results, then the argument entry last. For each:
+them, then results. For each atomic entry:
 
 1. **Create the entry** with title, type, summary (one sentence), and content. \
-Choose the right content_format: use latex for papers with heavy math notation, \
-markdown for everything else, plain only if neither applies.
+Use markdown with inline LaTeX math ($...$ and $$...$$) for content_format — NOT \
+raw latex format. The website renders markdown with KaTeX math support.
 
 2. **Write self-contained content.** Someone reading only this entry — without the paper — \
 must understand it fully. Include all necessary context, conditions, and notation. \
@@ -73,9 +81,19 @@ Use the paper's exact mathematical statements; do not paraphrase or weaken claim
 3. **Tag for discoverability.** Add tags for the field, subfield, key concepts, and \
 techniques. Include the paper's arXiv ID if applicable (e.g., arxiv:2401.12345).
 
-4. **Create references** to other entries. Use appropriate relation types: \
-"cites", "derives_from", "supports", "evidence", "context". \
-Both entries must exist before you create a reference between them.
+4. **Create references immediately** after creating each entry. Use the references API \
+(the references extension endpoint) — do NOT just mention entry IDs in content text. \
+For each new entry, create:
+   - **Inter-atomic references**: if this entry depends on earlier entries (e.g., a \
+     theorem uses a definition), create those references now.
+   - **Paper reference**: create a reference from the paper entry to this atomic entry. \
+     The paper entry is archived but references still work on archived entries.
+   - Use relation types: "cites", "derives_from", "supports", "evidence", "context".
+
+### Step C: Unarchive the paper entry
+
+After all atomic entries and references are created, **unarchive** the paper entry. \
+It is now complete with references to every atomic entry in the knowledge graph.
 
 ## What to extract
 
