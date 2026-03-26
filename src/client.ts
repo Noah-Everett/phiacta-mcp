@@ -9,7 +9,6 @@
 export interface PluginProviderInfo {
   fields: string[];
   writable_fields: string[];
-  required_on_create: string[];
   include_in_list: boolean;
   include_in_detail: boolean;
 }
@@ -31,6 +30,21 @@ export class PhiactaClient {
 
   constructor(baseUrl: string) {
     this.baseUrl = baseUrl.replace(/\/+$/, "");
+  }
+
+  /**
+   * Set a bearer token directly (e.g. a PAT).
+   * Skips login — the token is used as-is for all authenticated requests.
+   */
+  setToken(token: string): void {
+    this.token = token;
+  }
+
+  /**
+   * Get the current bearer token, if any.
+   */
+  getToken(): string | undefined {
+    return this.token ?? undefined;
   }
 
   async login(handle: string, password: string): Promise<void> {

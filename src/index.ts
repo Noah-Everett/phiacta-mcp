@@ -9,6 +9,7 @@
  *
  * Environment variables:
  *   PHIACTA_API_URL   — API base URL (default: https://api.phiacta.com)
+ *   PHIACTA_TOKEN     — Personal access token (takes precedence over handle/password)
  *   PHIACTA_HANDLE    — User handle for authentication
  *   PHIACTA_PASSWORD  — User password for authentication
  */
@@ -21,6 +22,7 @@ import { registerDiscoveredTools } from "./register.js";
 import { registerPrompts } from "./prompts.js";
 
 const API_URL = process.env.PHIACTA_API_URL ?? "https://api.phiacta.com";
+const PHIACTA_TOKEN = process.env.PHIACTA_TOKEN ?? "";
 const PHIACTA_HANDLE = process.env.PHIACTA_HANDLE ?? "";
 const PHIACTA_PASSWORD = process.env.PHIACTA_PASSWORD ?? "";
 
@@ -51,15 +53,6 @@ function buildInstructions(plugins: import("./client.js").PluginInfo[]): string 
       lines.push(`- **${p.name}**: ${fields} (${scope})`);
     }
 
-    const allRequired = withProviders
-      .flatMap((p) => p.provider!.required_on_create ?? []);
-    if (allRequired.length > 0) {
-      lines.push("");
-      lines.push(
-        `**Required on create**: ${allRequired.map((f) => `\`${f}\``).join(", ")}. These fields must be included when calling \`create_entry\`.`
-      );
-    }
-
     const allWritable = withProviders
       .flatMap((p) => p.provider!.writable_fields);
     if (allWritable.length > 0) {
@@ -85,13 +78,11 @@ function buildInstructions(plugins: import("./client.js").PluginInfo[]): string 
     "",
     "## Creating entries",
     "",
-    "Use `create_entry` with extension fields as needed. Required fields are declared by each plugin's `required_on_create` (e.g., the metadata plugin requires `title`). Common fields: `title`, `summary`, `entry_type`, `tags`, `content`, `content_format` (markdown/latex/plain).",
+    "Use `create_entry` with at minimum a `title`. Add `entry_type`, `summary`, `content`, and `content_format` (markdown/latex/plain) as needed.",
     "",
-    "## Entry content and files",
+    "## Entry content",
     "",
     "Each entry's content lives in `.phiacta/content.md` (or `.tex`, `.txt`) in its git repo. Write content via `put_entry_file` with path `.phiacta/content.md`. The identity file `.phiacta/entry.yaml` is immutable and cannot be modified.",
-    "",
-    "Entries can also have supplementary files (figures, data, code) uploaded to the repo. Use `put_entry_file` with any path (e.g., `figures/diagram.png`, `data/results.csv`). Reference images in markdown content with `![alt](figures/diagram.png)` — the website resolves relative paths automatically. Link to other entries with `[Entry Title](/entries/{id})` — the website validates these and warns on broken links.",
     "",
     "## Entity resolve",
     "",
@@ -116,8 +107,10 @@ function buildInstructions(plugins: import("./client.js").PluginInfo[]): string 
 async function main() {
   const client = new PhiactaClient(API_URL);
 
-  // Login if credentials are provided
-  if (PHIACTA_HANDLE && PHIACTA_PASSWORD) {
+  // Authenticate: PAT takes hard precedence over handle/password
+  if (PHIACTA_TOKEN) {
+    client.setToken(PHIACTA_TOKEN);
+  } else if (PHIACTA_HANDLE && PHIACTA_PASSWORD) {
     await client.login(PHIACTA_HANDLE, PHIACTA_PASSWORD);
   }
 
