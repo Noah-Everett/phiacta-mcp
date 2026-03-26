@@ -222,4 +222,100 @@ describe("PhiactaClient", () => {
       await expect(new PhiactaClient(BASE_URL).callApi("GET", "/v1/entries")).rejects.toThrow();
     });
   });
+
+  describe("callApi — 5xx retry with backoff", () => {
+    it("retries GET on 502 up to 3 times then fails", async () => {
+      mockFetch.mockResolvedValue(jsonResponse({ detail: "Bad Gateway" }, 502));
+      await expect(new PhiactaClient(BASE_URL).callApi("GET", "/v1/entries")).rejects.toThrow(/502/);
+      // 1 initial + 3 retries = 4 calls
+      expect(mockFetch).toHaveBeenCalledTimes(4);
+    });
+
+    it("retries PUT on 503 and succeeds on retry", async () => {
+      mockFetch
+        .mockResolvedValueOnce(jsonResponse({ detail: "Service Unavailable" }, 503))
+        .mockResolvedValueOnce(jsonResponse({ sha: "abc" }));
+      const result = await new PhiactaClient(BASE_URL).callApi("PUT", "/v1/entries/x/files/f");
+      expect(result).toEqual({ sha: "abc" });
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+    });
+
+    it("does NOT retry POST on 502 (not idempotent)", async () => {
+      mockFetch.mockResolvedValueOnce(jsonResponse({ detail: "Bad Gateway" }, 502));
+      await expect(new PhiactaClient(BASE_URL).callApi("POST", "/v1/entries", undefined, {})).rejects.toThrow(/502/);
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+    });
+
+    it("does NOT retry on 500 (not transient)", async () => {
+      mockFetch.mockResolvedValueOnce(jsonResponse({ detail: "ISE" }, 500));
+      await expect(new PhiactaClient(BASE_URL).callApi("GET", "/v1/entries")).rejects.toThrow(/500/);
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+    });
+
+    it("does NOT retry on 400 (client error)", async () => {
+      mockFetch.mockResolvedValueOnce(jsonResponse({ detail: "Bad Request" }, 400));
+      await expect(new PhiactaClient(BASE_URL).callApi("GET", "/v1/entries")).rejects.toThrow(/400/);
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("uploadFile", () => {
+    it("sends multipart FormData with file and message", async () => {
+      mockFetch.mockResolvedValueOnce(jsonResponse({ access_token: "jwt" }));
+      const client = new PhiactaClient(BASE_URL);
+      await client.login("user", "pass");
+
+      mockFetch.mockResolvedValueOnce(jsonResponse({ sha: "abc123" }));
+      const content = new TextEncoder().encode("hello");
+      await client.uploadFile("/v1/entries/x/files/f.txt", content, "msg");
+
+      const [, opts] = mockFetch.mock.calls[1];
+      expect(opts.method).toBe("PUT");
+      expect(opts.body).toBeInstanceOf(FormData);
+      expect(opts.headers["Authorization"]).toBe("Bearer jwt");
+      // Must NOT set Content-Type (Fetch API handles boundary)
+      expect(opts.headers["Content-Type"]).toBeUndefined();
+    });
+
+    it("retries uploadFile on 502 for PUT", async () => {
+      mockFetch.mockResolvedValueOnce(jsonResponse({ access_token: "jwt" }));
+      const client = new PhiactaClient(BASE_URL);
+      await client.login("user", "pass");
+
+      mockFetch
+        .mockResolvedValueOnce(jsonResponse({ detail: "Bad Gateway" }, 502))
+        .mockResolvedValueOnce(jsonResponse({ sha: "retry-ok" }));
+
+      const result = await client.uploadFile("/v1/entries/x/files/f.txt", new Uint8Array([1, 2, 3]));
+      expect(result).toEqual({ sha: "retry-ok" });
+      // login + 502 + success = 3 calls
+      expect(mockFetch).toHaveBeenCalledTimes(3);
+    });
+
+    it("401 retry on uploadFile re-authenticates then succeeds", async () => {
+      mockFetch.mockResolvedValueOnce(jsonResponse({ access_token: "jwt1" }));
+      const client = new PhiactaClient(BASE_URL);
+      await client.login("user", "pass");
+
+      mockFetch
+        .mockResolvedValueOnce(jsonResponse({ detail: "Token expired" }, 401))
+        .mockResolvedValueOnce(jsonResponse({ access_token: "jwt2" }))  // re-login
+        .mockResolvedValueOnce(jsonResponse({ sha: "after-reauth" }));
+
+      const result = await client.uploadFile("/v1/entries/x/files/f.txt", new Uint8Array([1]));
+      expect(result).toEqual({ sha: "after-reauth" });
+    });
+
+    it("omits message from FormData when not provided", async () => {
+      mockFetch.mockResolvedValueOnce(jsonResponse({ access_token: "jwt" }));
+      const client = new PhiactaClient(BASE_URL);
+      await client.login("user", "pass");
+
+      mockFetch.mockResolvedValueOnce(jsonResponse({ sha: "abc" }));
+      await client.uploadFile("/v1/entries/x/files/f.txt", new Uint8Array([1]));
+
+      const formData: FormData = mockFetch.mock.calls[1][1].body;
+      expect(formData.has("message")).toBe(false);
+    });
+  });
 });
