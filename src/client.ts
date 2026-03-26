@@ -168,7 +168,7 @@ export class PhiactaClient {
     const url = `${this.baseUrl}${path}`;
 
     const formData = new FormData();
-    formData.append("content", new Blob([fileBytes]), "file");
+    formData.append("content", new Blob([fileBytes as unknown as BlobPart]), "file");
     if (message !== undefined) {
       formData.append("message", message);
     }
