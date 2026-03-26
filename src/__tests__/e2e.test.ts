@@ -22,8 +22,8 @@ describe("E2E: Startup and tool registration", () => {
     const tools = discoverTools(spec);
     const server = new McpServer({ name: "phiacta-mcp", version: "0.1.0" });
     registerDiscoveredTools(server, tools, client);
-    expect(tools).toHaveLength(6);
-    expect(tools.map((t) => t.name).sort()).toEqual(["create_entry", "get_entry", "list_entries", "list_tags_for_entry", "search_entries", "set_tags"]);
+    expect(tools).toHaveLength(8);
+    expect(tools.map((t) => t.name).sort()).toEqual(["create_entry", "get_entry", "list_entries", "list_tags_for_entry", "resolve_entity", "search_entries", "set_tags", "update_entry"]);
   });
 
   it("logs in before fetching spec when credentials provided", async () => {
@@ -34,7 +34,7 @@ describe("E2E: Startup and tool registration", () => {
     const tools = discoverTools(await client.fetchOpenApiSpec());
     expect(mockFetch).toHaveBeenCalledTimes(2);
     expect(mockFetch.mock.calls[0][0]).toContain("/v1/auth/login");
-    expect(tools.length).toBe(6);
+    expect(tools.length).toBe(8);
   });
 
   it("fails when backend is unreachable", async () => {

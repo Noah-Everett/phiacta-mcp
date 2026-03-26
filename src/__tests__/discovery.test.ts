@@ -47,9 +47,9 @@ describe("discoverTools", () => {
   describe("route filtering", () => {
     it("discovers only /v1/ routes, excluding /v1/auth/* and non-/v1/", () => {
       const tools = discoverTools(REPRESENTATIVE_OPENAPI_SPEC);
-      expect(tools).toHaveLength(6);
+      expect(tools).toHaveLength(8);
       const names = tools.map((t) => t.name).sort();
-      expect(names).toEqual(["create_entry", "get_entry", "list_entries", "list_tags_for_entry", "search_entries", "set_tags"]);
+      expect(names).toEqual(["create_entry", "get_entry", "list_entries", "list_tags_for_entry", "resolve_entity", "search_entries", "set_tags", "update_entry"]);
     });
     it("excludes auth login route", () => {
       const names = discoverTools(REPRESENTATIVE_OPENAPI_SPEC).map((t) => t.name);
@@ -97,7 +97,7 @@ describe("discoverTools", () => {
       const t = findTool(discoverTools(REPRESENTATIVE_OPENAPI_SPEC), "list_entries");
       expect(t.queryParams).toContain("limit");
       expect(t.queryParams).toContain("offset");
-      expect(t.queryParams).toHaveLength(4);
+      expect(t.queryParams).toHaveLength(5);
     });
     it("extracts path parameters", () => {
       const t = findTool(discoverTools(REPRESENTATIVE_OPENAPI_SPEC), "get_entry");

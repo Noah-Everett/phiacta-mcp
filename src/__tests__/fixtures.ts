@@ -15,7 +15,8 @@ export const REPRESENTATIVE_OPENAPI_SPEC = {
           { name: "limit", in: "query", required: false, schema: { type: "integer", default: 50 } },
           { name: "offset", in: "query", required: false, schema: { type: "integer", default: 0 } },
           { name: "status", in: "query", required: false, schema: { type: "string", default: "active" } },
-          { name: "entry_type", in: "query", required: false, schema: { anyOf: [{ type: "string" }, { type: "null" }] } },
+          { name: "include", in: "query", required: false, schema: { anyOf: [{ type: "string" }, { type: "null" }] } },
+          { name: "exclude", in: "query", required: false, schema: { anyOf: [{ type: "string" }, { type: "null" }] } },
         ],
         responses: { "200": { description: "Successful Response" } },
       },
@@ -47,9 +48,40 @@ export const REPRESENTATIVE_OPENAPI_SPEC = {
       get: {
         operationId: "get_entry_v1_entries__entry_id__get",
         summary: "Get Entry",
-        description: "Retrieve a single entry by ID.",
+        description: "Retrieve a single entry by ID with auto-composed extension data.",
         parameters: [
           { name: "entry_id", in: "path", required: true, schema: { type: "string", format: "uuid" } },
+          { name: "include", in: "query", required: false, schema: { anyOf: [{ type: "string" }, { type: "null" }] } },
+          { name: "exclude", in: "query", required: false, schema: { anyOf: [{ type: "string" }, { type: "null" }] } },
+        ],
+        responses: { "200": { description: "Successful Response" } },
+      },
+      patch: {
+        operationId: "update_entry_v1_entries__entry_id__patch",
+        summary: "Update Entry",
+        description: "Update entry via unified PATCH — routes fields to owning extensions.",
+        security: [{ Bearer: [] }],
+        parameters: [
+          { name: "entry_id", in: "path", required: true, schema: { type: "string", format: "uuid" } },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: { type: "object", properties: {} },
+            },
+          },
+        },
+        responses: { "200": { description: "Successful Response" } },
+      },
+    },
+    "/v1/entities/{entity_id}": {
+      get: {
+        operationId: "resolve_entity_v1_entities__entity_id__get",
+        summary: "Resolve Entity",
+        description: "Resolve any UUID to its entity type and composed data.",
+        parameters: [
+          { name: "entity_id", in: "path", required: true, schema: { type: "string", format: "uuid" } },
         ],
         responses: { "200": { description: "Successful Response" } },
       },
