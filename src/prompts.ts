@@ -108,6 +108,28 @@ Be exhaustive. When in doubt, make it an entry.
 - Every **key observation** — important insights or remarks
 - Every **assumption** — stated conditions or constraints
 - **Notation conventions** if they define notation used throughout
+- **Software tools and packages** — these ARE knowledge. AMFlow, SOFIA, etc. are \
+methodologies/definitions. Create entries for them.
+
+## Figures and visual content
+
+Entries can have supplementary files. If the paper contains figures, diagrams, or plots:
+
+1. **Upload the file** to the entry's repo (e.g., path "figures/diagram.png")
+2. **Reference it in content** with markdown: ![description](figures/diagram.png) \
+The website renders these inline automatically.
+3. **Describe the content textually** too — someone reading the text should understand \
+the key information even without seeing the figure.
+
+For Feynman diagrams, flow charts, or other visual structures: describe the topology \
+or structure in text/LaTeX, and upload the original figure if available.
+
+## Linking between entries
+
+In entry content, link to other Phiacta entries with standard markdown: \
+[Entry Title](/entries/{id}). This creates a clickable link on the website. \
+Note: this is a content link for reading convenience — always ALSO create a formal \
+reference via the references API for the knowledge graph.
 
 ## After creating everything
 
@@ -115,8 +137,7 @@ Report:
 - Total entries created, broken down by type
 - The argument entry's ID (the paper entry)
 - Existing Phiacta entries that were linked to
-- External references that couldn't be linked (candidates for future ingestion)
-- Anything in the paper that was difficult to represent as entries`;
+- External references that couldn't be linked (candidates for future ingestion)`;
 
 const ENTRY_REVIEW_PROMPT = `You are reviewing an entry in the Phiacta knowledge platform. \
 Your job is to assess its accuracy, completeness, and quality, then suggest or make \
