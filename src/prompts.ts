@@ -31,6 +31,17 @@ Read the **full document** before doing anything else. Determine what kind of so
 is — e.g., research paper, review paper, blog post, textbook chapter, lecture notes, \
 technical report — as this determines the entry type for the top-level entry.
 
+## Content quality rule
+
+Each entry must be understandable on its own. Provide enough context — what the subject \
+is, what domain it belongs to, why it matters — that a reader grasps the entry without \
+following references. Don't re-derive everything, but don't assume the reader just finished \
+reading the source document either.
+
+Use markdown links to other Phiacta entries (e.g., \`[ALEPH experiment](/entry/{id})\`) \
+instead of re-explaining things inline. This keeps entries concise while still self-contained — \
+the link text provides context, and the reader can follow it for depth.
+
 ## Workflow
 
 ### 1. Search
