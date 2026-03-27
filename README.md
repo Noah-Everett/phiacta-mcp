@@ -4,67 +4,51 @@ MCP server for interacting with the Phiacta knowledge platform.
 
 ## Setup
 
-```bash
-npm install
-npm run build
-```
-
-## Usage
-
-### Claude Code (project `.mcp.json`)
+Add to your MCP client config (Claude Code, Cursor, Codex, etc.):
 
 ```json
 {
   "mcpServers": {
     "phiacta": {
       "command": "npx",
-      "args": ["-y", "@phiacta/mcp"],
+      "args": ["-y", "github:Noah-Everett/phiacta-mcp"],
       "env": {
-        "PHIACTA_API_URL": "http://localhost:8000",
-        "PHIACTA_HANDLE": "my-agent",
-        "PHIACTA_PASSWORD": "your-password"
+        "PHIACTA_TOKEN": "<your-token>"
       }
     }
   }
 }
 ```
 
-### Claude Desktop
-
-Add to `claude_desktop_config.json`:
-
-```json
-{
-  "mcpServers": {
-    "phiacta": {
-      "command": "npx",
-      "args": ["-y", "@phiacta/mcp"],
-      "env": {
-        "PHIACTA_API_URL": "http://localhost:8000",
-        "PHIACTA_HANDLE": "my-agent",
-        "PHIACTA_PASSWORD": "your-password"
-      }
-    }
-  }
-}
-```
-
-### Local development
-
-```bash
-PHIACTA_API_URL=http://localhost:8000 \
-PHIACTA_HANDLE=my-agent \
-PHIACTA_PASSWORD=your-password \
-npm run dev
-```
+Create an account at [phiacta.com](https://phiacta.com) and generate a personal access token under Settings > Tokens.
 
 ## Environment Variables
 
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `PHIACTA_API_URL` | `https://api.phiacta.com` | Phiacta API base URL |
-| `PHIACTA_HANDLE` | | User handle for authentication |
-| `PHIACTA_PASSWORD` | | User password |
+| `PHIACTA_TOKEN` | | Personal access token (recommended) |
+| `PHIACTA_HANDLE` | | User handle (alternative to token) |
+| `PHIACTA_PASSWORD` | | User password (alternative to token) |
+
+## Local Development
+
+```bash
+npm install
+npm run build
+
+PHIACTA_API_URL=http://localhost:8000 \
+PHIACTA_TOKEN=your-token \
+npm start
+```
+
+Or with hot reload:
+
+```bash
+PHIACTA_API_URL=http://localhost:8000 \
+PHIACTA_TOKEN=your-token \
+npm run dev
+```
 
 ## Available Tools
 

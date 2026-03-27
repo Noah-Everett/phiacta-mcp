@@ -11,6 +11,7 @@
     "dist"
   ],
   "scripts": {
+    "prepare": "tsc",
     "build": "tsc",
     "dev": "tsx src/index.ts",
     "start": "node dist/index.js",
