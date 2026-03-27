@@ -7,6 +7,11 @@
  * Fetches docs from the backend's /v1/docs endpoint and registers each
  * as an MCP resource.  The MCP server owns no content — all domain
  * documentation lives in the backend.
+ *
+ * Convention docs (content-guide, reference-roles, entry-types,
+ * linking-format) are served by the backend from markdown files in
+ * src/phiacta/docs/.  To add or update conventions, edit those files
+ * in the backend repo — no MCP server changes needed.
  */
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";

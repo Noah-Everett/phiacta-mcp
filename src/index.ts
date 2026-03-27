@@ -124,6 +124,10 @@ function buildInstructions(plugins: import("./client.js").PluginInfo[], authenti
         : "") +
       " All other fields are optional. Entry types and tag values are open-ended strings — use whatever fits.",
     "",
+    "## Conventions (IMPORTANT)",
+    "",
+    "You MUST list MCP resources and read every resource under `phiacta://docs/` before your FIRST create or edit operation in any conversation. These convention docs describe how to write content, which reference roles to use, entry type conventions, and the internal linking format. Do not create or modify entries without having read them. If no `phiacta://docs/` resources are available, STOP and tell the user the convention docs are missing.",
+    "",
     "## Entry content",
     "",
     "Each entry's content lives in `.phiacta/content.md` (or `.tex`, `.txt`) in its git repo. Write content via `put_entry_file` with path `.phiacta/content.md`. The identity file `.phiacta/entry.yaml` is immutable and cannot be modified.",
