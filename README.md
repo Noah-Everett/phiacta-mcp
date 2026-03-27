@@ -11,7 +11,7 @@ Add to your MCP client config (Claude Code, Cursor, Codex, etc.):
   "mcpServers": {
     "phiacta": {
       "command": "npx",
-      "args": ["-y", "phiacta-mcp"],
+      "args": ["-y", "phiacta-mcp@latest"],
       "env": {
         "PHIACTA_TOKEN": "<your-token>"
       }
