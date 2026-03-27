@@ -1,4 +1,4 @@
-# @phiacta/mcp
+# phiacta-mcp
 
 MCP server for interacting with the Phiacta knowledge platform.
 
@@ -11,7 +11,7 @@ Add to your MCP client config (Claude Code, Cursor, Codex, etc.):
   "mcpServers": {
     "phiacta": {
       "command": "npx",
-      "args": ["-y", "github:Noah-Everett/phiacta-mcp"],
+      "args": ["-y", "phiacta-mcp"],
       "env": {
         "PHIACTA_TOKEN": "<your-token>"
       }

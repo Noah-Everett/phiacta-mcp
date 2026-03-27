@@ -1,5 +1,5 @@
 {
-  "name": "@phiacta/mcp",
+  "name": "phiacta-mcp",
   "version": "0.1.0",
   "description": "MCP server for interacting with the Phiacta knowledge platform",
   "license": "GPL-3.0-or-later",
@@ -8,7 +8,8 @@
     "phiacta-mcp": "dist/index.js"
   },
   "files": [
-    "dist"
+    "dist",
+    "!dist/__tests__"
   ],
   "scripts": {
     "prepare": "tsc",
