@@ -17,8 +17,8 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
-const PAPER_INGESTION_PROMPT = `You are extracting structured knowledge from an academic \
-paper into Phiacta.
+const PAPER_INGESTION_PROMPT = `You are extracting structured knowledge from a document \
+into Phiacta.
 
 Read the Phiacta MCP resources before starting — they document entry types, reference \
 roles, content formats, tag conventions, and content writing guidelines.
@@ -27,7 +27,9 @@ roles, content formats, tag conventions, and content writing guidelines.
 
 {{paper}}
 
-Read the **full paper** before doing anything else.
+Read the **full document** before doing anything else. Determine what kind of source it \
+is — e.g., research paper, review paper, blog post, textbook chapter, lecture notes, \
+technical report — as this determines the entry type for the top-level entry.
 
 ## Workflow
 
@@ -43,13 +45,22 @@ Write a numbered list of every entry to create: proposed title, entry type, and 
 other entries it references (by list number and by existing Phiacta ID). This maps the \
 dependency structure before you touch the API.
 
-### 3. Create the paper entry
+### 3. Get approval
 
-Create an entry with type "argument" (title, summary, content, tags — all in one call). \
+**STOP HERE.** Present the full plan to the user — the complete list of entries, their \
+types, summaries, and reference structure. Do NOT create any entries until the user \
+explicitly approves the plan. They may want to adjust titles, merge or split entries, \
+change types, or skip some entirely.
+
+### 4. Create the paper entry
+
+Create a top-level entry with the appropriate type for the source (e.g., "paper", \
+"review-paper", "blog-post", "textbook-chapter", "lecture-notes", "technical-report") \
+and all fields (title, summary, content, tags — all in one call). \
 Wait for repo_status = "ready", then **archive** it. It stays hidden until everything \
 is wired up.
 
-### 4. Create atomic entries in dependency order
+### 5. Create atomic entries in dependency order
 
 For each entry in your plan:
 
@@ -58,9 +69,9 @@ content, content_format). Do not make separate calls to set metadata.
 2. **Create references** — the one thing that requires a separate call, since the \
 target must exist. Create inter-atomic refs and a paper-to-atomic ref.
 
-### 5. Unarchive the paper entry
+### 6. Unarchive the paper entry
 
-### 6. Report
+### 7. Report
 
 Total entries by type, the paper entry ID, existing entries linked to, and external \
 references that could not be linked (candidates for future ingestion).`;
@@ -101,15 +112,21 @@ references) AND its content. Read both carefully before evaluating.
 - Are the tags comprehensive? Would someone searching for this topic find it?
 - Is the title specific enough to distinguish it from similar entries?
 
-**Step 6: Act on findings.**
-- Metadata issues (title, summary, type, tags): offer to fix them immediately \
-using the update tool.
-- Missing references: offer to create them.
+**Step 6: Present findings and get approval.**
+
+**STOP HERE.** Present your complete assessment to the user before making any changes. \
+List every issue found and your proposed fix for each. Do NOT update metadata, create \
+references, or file issues until the user explicitly approves. They may disagree with \
+your assessment or want different fixes.
+
+**Step 7: Act on approved findings.**
+- Metadata issues (title, summary, type, tags): fix using the update tool.
+- Missing references: create them.
 - Content issues: describe the problem precisely with a suggested fix. \
 If the entry has an issue tracker, create an issue.
 - If everything looks good, say so — not every entry needs changes.
 
-**Step 7: Report.**
+**Step 8: Report.**
 Summarize with:
 - **Verdict**: Good / Needs minor fixes / Needs significant revision
 - **What's correct**: What the entry does well
@@ -160,8 +177,9 @@ Their absence makes the coverage incomplete.
 - **Opportunities**: Supporting details, examples, applications, or connections to \
 other fields that would enrich the coverage.
 
-**Step 5: Report.**
-Present:
+**Step 5: Present analysis and get approval.**
+
+**STOP HERE.** Present the full analysis to the user:
 - **Coverage summary**: What exists, organized by subtopic. How many entries, \
 what types, how well connected.
 - **Gap list**: Each gap with its priority, a proposed entry title and type, \
@@ -169,13 +187,20 @@ and a brief content outline.
 - **Suggested references**: How proposed entries would connect to existing ones.
 - **Recommended ingestion order**: Which gaps to fill first based on dependencies.
 
-If the user wants, offer to create the proposed entries.`;
+Do NOT create any entries until the user explicitly approves. They may want to \
+adjust priorities, skip certain gaps, or refine proposed titles and types.
+
+**Step 6: Create approved entries.**
+
+If the user approves (all or a subset), create the entries in dependency order \
+following the same pattern as paper ingestion: one call per entry with all fields, \
+then separate calls for references.`;
 
 export function registerPrompts(server: McpServer): void {
   server.prompt(
     "paper-ingestion",
-    "Extract structured knowledge entries from an academic paper and create them in Phiacta",
-    { paper: z.string().describe("The paper to ingest — a file path, directory, URL, or raw text content") },
+    "Extract structured knowledge entries from a document (paper, blog post, etc.) and create them in Phiacta",
+    { paper: z.string().describe("The document to ingest — a file path, directory, URL, or raw text content") },
     ({ paper }) => ({
       messages: [
         {
