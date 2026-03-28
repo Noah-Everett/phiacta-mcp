@@ -237,7 +237,11 @@ export class PhiactaClient {
     }
 
     const headers: Record<string, string> = {};
-    if (auth && this.token) {
+    // Always include the token when available so the backend can
+    // apply owner-specific visibility (e.g. archived entries).
+    // When auth is explicitly true, the caller requires auth; here
+    // we pass the token opportunistically on all requests.
+    if (this.token) {
       headers["Authorization"] = `Bearer ${this.token}`;
     }
     if (body !== undefined) {
