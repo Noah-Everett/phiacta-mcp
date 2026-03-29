@@ -68,8 +68,8 @@ change types, or skip some entirely.
 Create a top-level entry with the appropriate type for the source (e.g., "paper", \
 "review-paper", "blog-post", "textbook-chapter", "lecture-notes", "technical-report") \
 and all fields (title, summary, content, tags — all in one call). \
-Wait for repo_status = "ready", then **archive** it. It stays hidden until everything \
-is wired up.
+Wait for repo_status = "ready", then set **visibility = "private"** so it stays hidden \
+until everything is wired up.
 
 ### 5. Create component entries in dependency order
 
@@ -80,7 +80,9 @@ content, content_format). Do not make separate calls to set metadata.
 2. **Create references** — the one thing that requires a separate call, since the \
 target must exist. Create inter-entry refs and a paper-to-component ref.
 
-### 6. Unarchive the paper entry
+### 6. Make the paper entry public
+
+Set visibility = "public" on the paper entry.
 
 ### 7. Report
 

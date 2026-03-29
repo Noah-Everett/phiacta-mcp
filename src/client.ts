@@ -238,7 +238,7 @@ export class PhiactaClient {
 
     const headers: Record<string, string> = {};
     // Always include the token when available so the backend can
-    // apply owner-specific visibility (e.g. archived entries).
+    // apply owner-specific visibility (e.g. private entries).
     // When auth is explicitly true, the caller requires auth; here
     // we pass the token opportunistically on all requests.
     if (this.token) {
