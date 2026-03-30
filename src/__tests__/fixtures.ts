@@ -61,7 +61,7 @@ export const REPRESENTATIVE_OPENAPI_SPEC = {
         parameters: [
           { name: "limit", in: "query", required: false, schema: { type: "integer", default: 50 } },
           { name: "offset", in: "query", required: false, schema: { type: "integer", default: 0 } },
-          { name: "status", in: "query", required: false, schema: { type: "string", default: "active" } },
+          { name: "visibility", in: "query", required: false, schema: { type: "string", default: "all" } },
           { name: "include", in: "query", required: false, schema: { anyOf: [{ type: "string" }, { type: "null" }] } },
           { name: "exclude", in: "query", required: false, schema: { anyOf: [{ type: "string" }, { type: "null" }] } },
         ],

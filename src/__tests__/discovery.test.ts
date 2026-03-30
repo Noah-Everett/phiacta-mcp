@@ -149,7 +149,7 @@ describe("discoverTools", () => {
 
   describe("Zod schema generation", () => {
     it("accepts valid query parameters", () => {
-      expect(findTool(discoverTools(REPRESENTATIVE_OPENAPI_SPEC), "list_entries").zodSchema.safeParse({ limit: 10, offset: 0, status: "active" }).success).toBe(true);
+      expect(findTool(discoverTools(REPRESENTATIVE_OPENAPI_SPEC), "list_entries").zodSchema.safeParse({ limit: 10, offset: 0, visibility: "public" }).success).toBe(true);
     });
     it("accepts valid path parameters", () => {
       expect(findTool(discoverTools(REPRESENTATIVE_OPENAPI_SPEC), "get_entry").zodSchema.safeParse({ entry_id: "550e8400-e29b-41d4-a716-446655440000" }).success).toBe(true);
