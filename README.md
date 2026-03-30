@@ -28,7 +28,7 @@ Create an account at [phiacta.com](https://phiacta.com) and generate a personal 
 |----------|---------|-------------|
 | `PHIACTA_API_URL` | `https://api.phiacta.com` | Phiacta API base URL |
 | `PHIACTA_TOKEN` | | Personal access token (recommended) |
-| `PHIACTA_HANDLE` | | User handle (alternative to token) |
+| `PHIACTA_USERNAME` | | Username (alternative to token) |
 | `PHIACTA_PASSWORD` | | User password (alternative to token) |
 
 ## Local Development

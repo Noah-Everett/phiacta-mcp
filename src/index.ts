@@ -9,8 +9,8 @@
  *
  * Environment variables:
  *   PHIACTA_API_URL   — API base URL (default: https://api.phiacta.com)
- *   PHIACTA_TOKEN     — Personal access token (takes precedence over handle/password)
- *   PHIACTA_HANDLE    — User handle for authentication
+ *   PHIACTA_TOKEN     — Personal access token (takes precedence over username/password)
+ *   PHIACTA_USERNAME  — Username for authentication
  *   PHIACTA_PASSWORD  — User password for authentication
  */
 
@@ -25,7 +25,7 @@ import { registerResources } from "./resources.js";
 
 const API_URL = process.env.PHIACTA_API_URL ?? "https://api.phiacta.com";
 const PHIACTA_TOKEN = process.env.PHIACTA_TOKEN ?? "";
-const PHIACTA_HANDLE = process.env.PHIACTA_HANDLE ?? "";
+const PHIACTA_USERNAME = process.env.PHIACTA_USERNAME ?? "";
 const PHIACTA_PASSWORD = process.env.PHIACTA_PASSWORD ?? "";
 
 function buildInstructions(plugins: import("./client.js").PluginInfo[], authenticated: boolean): string {
@@ -155,11 +155,11 @@ function buildInstructions(plugins: import("./client.js").PluginInfo[], authenti
 async function main() {
   const client = new PhiactaClient(API_URL);
 
-  // Authenticate: PAT takes hard precedence over handle/password
+  // Authenticate: PAT takes hard precedence over username/password
   if (PHIACTA_TOKEN) {
     client.setToken(PHIACTA_TOKEN);
-  } else if (PHIACTA_HANDLE && PHIACTA_PASSWORD) {
-    await client.login(PHIACTA_HANDLE, PHIACTA_PASSWORD);
+  } else if (PHIACTA_USERNAME && PHIACTA_PASSWORD) {
+    await client.login(PHIACTA_USERNAME, PHIACTA_PASSWORD);
   }
 
   const authenticated = !!client.getToken();

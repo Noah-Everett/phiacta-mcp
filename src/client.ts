@@ -46,7 +46,7 @@ function sleep(ms: number): Promise<void> {
 export class PhiactaClient {
   private baseUrl: string;
   private token: string | null = null;
-  private handle: string | null = null;
+  private username: string | null = null;
   private password: string | null = null;
 
   constructor(baseUrl: string) {
@@ -68,15 +68,15 @@ export class PhiactaClient {
     return this.token ?? undefined;
   }
 
-  async login(handle: string, password: string): Promise<void> {
-    this.handle = handle;
+  async login(username: string, password: string): Promise<void> {
+    this.username = username;
     this.password = password;
 
     const url = `${this.baseUrl}/v1/auth/login`;
     const resp = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ handle, password }),
+      body: JSON.stringify({ username, password }),
     });
 
     if (!resp.ok) {
@@ -186,9 +186,9 @@ export class PhiactaClient {
     });
 
     // 401 retry: re-authenticate once with stored credentials
-    if (resp.status === 401 && !isRetry && this.handle && this.password) {
+    if (resp.status === 401 && !isRetry && this.username && this.password) {
       try {
-        await this.login(this.handle, this.password);
+        await this.login(this.username, this.password);
         return this._uploadFileInner(path, fileBytes, message, method, true, attempt);
       } catch {
         // Re-auth failed, fall through to normal error handling
@@ -255,9 +255,9 @@ export class PhiactaClient {
     });
 
     // 401 retry: re-authenticate once if this was an auth'd request with stored credentials
-    if (resp.status === 401 && !isRetry && auth !== false && this.handle && this.password) {
+    if (resp.status === 401 && !isRetry && auth !== false && this.username && this.password) {
       try {
-        await this.login(this.handle, this.password);
+        await this.login(this.username, this.password);
         return this._callApiInner(method, path, params, body, auth, true, attempt);
       } catch {
         // Re-auth failed, fall through to normal error handling

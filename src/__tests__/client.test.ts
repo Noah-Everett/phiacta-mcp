@@ -26,7 +26,7 @@ describe("PhiactaClient", () => {
       const [url, opts] = mockFetch.mock.calls[0];
       expect(url).toBe(`${BASE_URL}/v1/auth/login`);
       expect(opts.method).toBe("POST");
-      expect(JSON.parse(opts.body)).toEqual({ handle: "user", password: "pass" });
+      expect(JSON.parse(opts.body)).toEqual({ username: "user", password: "pass" });
     });
     it("stores JWT for subsequent auth requests", async () => {
       mockFetch.mockResolvedValueOnce(jsonResponse({ access_token: "jwt-456" }));
@@ -44,7 +44,7 @@ describe("PhiactaClient", () => {
         .mockResolvedValueOnce(jsonResponse({ access_token: "refreshed" }))
         .mockResolvedValueOnce(jsonResponse({ items: [] }));
       await client.callApi("GET", "/v1/entries", undefined, undefined, true);
-      expect(JSON.parse(mockFetch.mock.calls[2][1].body).handle).toBe("retryuser");
+      expect(JSON.parse(mockFetch.mock.calls[2][1].body).username).toBe("retryuser");
     });
     it("throws on login failure", async () => {
       mockFetch.mockResolvedValueOnce(jsonResponse({ detail: "Invalid" }, 401));

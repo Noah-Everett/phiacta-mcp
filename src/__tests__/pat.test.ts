@@ -3,7 +3,7 @@
  *
  * Tests cover:
  * - setToken() / getToken() methods
- * - 401 with PAT is a hard failure (no re-auth retry when no handle/password)
+ * - 401 with PAT is a hard failure (no re-auth retry when no username/password)
  * - PAT sent as Bearer token in Authorization header
  */
 
@@ -42,7 +42,7 @@ describe("PhiactaClient.setToken", () => {
 });
 
 // ---------------------------------------------------------------------------
-// 401 handling with PAT (no stored handle/password → no retry)
+// 401 handling with PAT (no stored username/password → no retry)
 // ---------------------------------------------------------------------------
 
 describe("PAT 401 error handling", () => {
@@ -61,7 +61,7 @@ describe("PAT 401 error handling", () => {
     try {
       await expect(client.callApi("GET", "/v1/auth/me", undefined, undefined, true)).rejects.toThrow();
 
-      // fetch should be called exactly once — no retry (no handle/password stored)
+      // fetch should be called exactly once — no retry (no username/password stored)
       expect(mockFetch).toHaveBeenCalledTimes(1);
     } finally {
       vi.unstubAllGlobals();
@@ -101,7 +101,7 @@ describe("PAT in Authorization header", () => {
     client.setToken(TEST_PAT);
 
     const mockFetch = vi.fn().mockResolvedValue(
-      new Response(JSON.stringify({ handle: "alice" }), {
+      new Response(JSON.stringify({ username: "alice" }), {
         status: 200,
         headers: { "content-type": "application/json" },
       }),
