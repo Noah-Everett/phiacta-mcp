@@ -98,7 +98,7 @@ function buildInstructions(plugins: import("./client.js").PluginInfo[], authenti
       const names = detailOnly.map((p) => p.name).join(", ");
       lines.push("");
       lines.push(
-        `**Field filtering**: \`list_entries\` and \`get_entry\` support \`include\` and \`exclude\` query params (comma-separated field names). Fields from ${names} are detail-only by default — use \`include=...\` to add them to list responses. Cannot use both include and exclude at once.`
+        `**Field filtering**: \`list_entries\` and \`get_entry\` support \`include\` and \`exclude\` query params (comma-separated field names). Fields from ${names} are detail-only by default. \`include=X,Y\` returns ONLY the listed extension fields (replaces defaults). \`exclude=X,Y\` returns all extension fields EXCEPT the listed ones (including detail-only fields). Cannot use both at once.`
       );
     }
   }
