@@ -71,14 +71,14 @@ and all fields (title, summary, content, tags — all in one call). \
 Wait for repo_status = "ready", then **archive** it. It stays hidden until everything \
 is wired up.
 
-### 5. Create atomic entries in dependency order
+### 5. Create component entries in dependency order
 
 For each entry in your plan:
 
 1. **Create in a single call** with all fields (title, entry_type, summary, tags, \
 content, content_format). Do not make separate calls to set metadata.
 2. **Create references** — the one thing that requires a separate call, since the \
-target must exist. Create inter-atomic refs and a paper-to-atomic ref.
+target must exist. Create inter-entry refs and a paper-to-component ref.
 
 ### 6. Unarchive the paper entry
 
