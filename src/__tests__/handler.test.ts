@@ -43,10 +43,10 @@ describe("createToolHandler", () => {
 
   describe("query parameter separation", () => {
     it("passes query parameters to callApi", async () => {
-      const handler = createToolHandler(makeTool({ queryParams: ["limit", "offset", "status"] }), mockClient);
+      const handler = createToolHandler(makeTool({ queryParams: ["limit", "offset", "visibility"] }), mockClient);
       (mockClient.callApi as any).mockResolvedValueOnce({ items: [] });
-      await handler({ limit: 10, offset: 20, status: "active" });
-      expect((mockClient.callApi as any).mock.calls[0][2]).toEqual(expect.objectContaining({ limit: 10, offset: 20, status: "active" }));
+      await handler({ limit: 10, offset: 20, visibility: "public" });
+      expect((mockClient.callApi as any).mock.calls[0][2]).toEqual(expect.objectContaining({ limit: 10, offset: 20, visibility: "public" }));
     });
     it("does not include query params in body", async () => {
       const handler = createToolHandler(makeTool({ httpMethod: "post", queryParams: ["format"], hasBody: true }), mockClient);

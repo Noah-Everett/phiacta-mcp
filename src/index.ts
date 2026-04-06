@@ -67,7 +67,7 @@ function buildInstructions(plugins: import("./client.js").PluginInfo[], authenti
     "",
     "## Entry fields",
     "",
-    "Entry responses include core fields (always present: `id`, `repo_status`, `status`, `created_by`, `created_at`, `updated_at`) plus dynamic extension fields from loaded plugins.",
+    "Entry responses include core fields (always present: `id`, `repo_status`, `visibility`, `created_by`, `created_at`, `updated_at`) plus dynamic extension fields from loaded plugins.",
   );
 
   // Generate field docs from provider metadata

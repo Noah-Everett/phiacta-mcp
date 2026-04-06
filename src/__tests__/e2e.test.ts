@@ -57,7 +57,7 @@ describe("E2E: Tool execution through handler", () => {
     const tools = discoverTools(await client.fetchOpenApiSpec());
     const handler = createToolHandler(tools.find((t) => t.name === "list_entries")!, client);
     mockFetch.mockResolvedValueOnce(jsonResponse({ items: [{ id: "1", title: "First" }], total: 1 }));
-    const result = await handler({ limit: 10, status: "active" });
+    const result = await handler({ limit: 10, visibility: "public" });
     const [url, opts] = mockFetch.mock.calls[1];
     expect(new URL(url).pathname).toBe("/v1/entries");
     expect(new URL(url).searchParams.get("limit")).toBe("10");
