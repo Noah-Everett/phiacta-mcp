@@ -97,7 +97,7 @@ describe("discoverTools", () => {
       const t = findTool(discoverTools(REPRESENTATIVE_OPENAPI_SPEC), "list_entries");
       expect(t.queryParams).toContain("limit");
       expect(t.queryParams).toContain("offset");
-      expect(t.queryParams).toHaveLength(5);
+      expect(t.queryParams).toHaveLength(4);
     });
     it("extracts path parameters", () => {
       const t = findTool(discoverTools(REPRESENTATIVE_OPENAPI_SPEC), "get_entry");

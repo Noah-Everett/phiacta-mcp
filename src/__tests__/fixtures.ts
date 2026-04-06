@@ -63,7 +63,6 @@ export const REPRESENTATIVE_OPENAPI_SPEC = {
           { name: "offset", in: "query", required: false, schema: { type: "integer", default: 0 } },
           { name: "visibility", in: "query", required: false, schema: { type: "string", default: "all" } },
           { name: "include", in: "query", required: false, schema: { anyOf: [{ type: "string" }, { type: "null" }] } },
-          { name: "exclude", in: "query", required: false, schema: { anyOf: [{ type: "string" }, { type: "null" }] } },
         ],
         responses: { "200": { description: "Successful Response" } },
       },
@@ -97,7 +96,6 @@ export const REPRESENTATIVE_OPENAPI_SPEC = {
         parameters: [
           { name: "entry_id", in: "path", required: true, schema: { type: "string", format: "uuid" } },
           { name: "include", in: "query", required: false, schema: { anyOf: [{ type: "string" }, { type: "null" }] } },
-          { name: "exclude", in: "query", required: false, schema: { anyOf: [{ type: "string" }, { type: "null" }] } },
         ],
         responses: { "200": { description: "Successful Response" } },
       },
@@ -238,8 +236,8 @@ export const REPRESENTATIVE_OPENAPI_SPEC = {
             "application/json": {
               schema: {
                 type: "object",
-                required: ["handle", "password"],
-                properties: { handle: { type: "string" }, password: { type: "string" } },
+                required: ["username", "password"],
+                properties: { username: { type: "string" }, password: { type: "string" } },
               },
             },
           },
@@ -271,7 +269,7 @@ export const AUTH_ONLY_OPENAPI_SPEC = {
       post: {
         operationId: "login_v1_auth_login_post",
         summary: "Login",
-        requestBody: { required: true, content: { "application/json": { schema: { type: "object", required: ["handle", "password"], properties: { handle: { type: "string" }, password: { type: "string" } } } } } },
+        requestBody: { required: true, content: { "application/json": { schema: { type: "object", required: ["username", "password"], properties: { username: { type: "string" }, password: { type: "string" } } } } } },
         responses: { "200": { description: "Successful Response" } },
       },
     },
@@ -279,7 +277,7 @@ export const AUTH_ONLY_OPENAPI_SPEC = {
       post: {
         operationId: "register_v1_auth_register_post",
         summary: "Register",
-        requestBody: { required: true, content: { "application/json": { schema: { type: "object", required: ["handle", "password"], properties: { handle: { type: "string" }, password: { type: "string" } } } } } },
+        requestBody: { required: true, content: { "application/json": { schema: { type: "object", required: ["username", "password"], properties: { username: { type: "string" }, password: { type: "string" } } } } } },
         responses: { "200": { description: "Successful Response" } },
       },
     },
