@@ -118,7 +118,8 @@ export class PhiactaClient {
     if (!resp.ok) {
       return []; // graceful fallback if endpoint unavailable
     }
-    return resp.json() as Promise<PluginInfo[]>;
+    const data = (await resp.json()) as { items: PluginInfo[] } | PluginInfo[];
+    return Array.isArray(data) ? data : data.items;
   }
 
   async fetchDocs(): Promise<DocInfo[]> {
@@ -127,7 +128,8 @@ export class PhiactaClient {
     if (!resp.ok) {
       return []; // graceful fallback if endpoint unavailable
     }
-    return resp.json() as Promise<DocInfo[]>;
+    const data = (await resp.json()) as { items: DocInfo[] } | DocInfo[];
+    return Array.isArray(data) ? data : data.items;
   }
 
   async callApi(
